@@ -12,8 +12,7 @@ namespace GymSystem.BLL.Dtos
     {
         public int? MembershipId { get; set; }
         public string? ImageUrl { get; set; }
-        //[NotMapped]
-        //public IFormFile? Image { get; set; }
+      
         public int MembershipType { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

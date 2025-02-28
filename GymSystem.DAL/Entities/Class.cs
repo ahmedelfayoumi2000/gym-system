@@ -21,9 +21,14 @@ namespace GymSystem.DAL.Entities
         public string? TrainerId { get; set; }
         public AppUser Trainer { get; set; }
 
+        //===============================
         public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
 
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+        //======================
+
+        public ICollection<MonthlyMembership> MonthlyMemberships { get; set; } = new List<MonthlyMembership>();
+        public ICollection<DailyAttendance> DailyAttendances { get; set; } = new List<DailyAttendance>();
 
         public ICollection<ClassEquipment> ClassEquipments { get; set; } = new List<ClassEquipment>();
     }

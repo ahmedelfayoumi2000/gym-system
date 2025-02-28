@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GymSystem.BLL.Repositories
+namespace GymSystem.BLL.Repositories.Business
 {
     public class NutritionPlanRepo : INutritionPlanRepo
     {

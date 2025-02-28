@@ -7,7 +7,7 @@ namespace GymSystem.DAL.Entities.Identity
     {
         public string DisplayName { get; set; } 
         public Address? Address { get; set; }
-        public int UserRole { get; set; }
+        public int UserRole { get; set; } // مثل Admin=1, Trainer=2, Receptionist=3, Member=4
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
         public string? ProfileImageName { get; set; } 
@@ -36,15 +36,12 @@ namespace GymSystem.DAL.Entities.Identity
 			}
 		}
 
-		// العلاقات مع الخطط
-		public int? DailyPlanId { get; set; } 
-        public DailyPlan DailyPlan { get; set; } 
-
-        public int? MonthlyPlanId { get; set; } 
-        public MonthlyPlan MonthlyPlan { get; set; } 
-
+	
 
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
+        public ICollection<DailyAttendance> DailyAttendances { get; set; } = new List<DailyAttendance>();
+        public ICollection<MonthlyMembership> MonthlyMemberships { get; set; } = new List<MonthlyMembership>();
 
         public int? NutritionPlanId { get; set; }
         public NutritionPlan nutritionPlan { get; set; }

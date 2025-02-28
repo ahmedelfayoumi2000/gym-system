@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Interfaces\IDailyPlanService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\GymSystem.DAL\GymSystem.DAL.csproj" />
   </ItemGroup>
 

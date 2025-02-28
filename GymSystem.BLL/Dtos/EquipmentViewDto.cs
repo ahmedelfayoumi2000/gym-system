@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GymSystem.BLL.Dtos
+﻿namespace GymSystem.BLL.Dtos
 {
     public class EquipmentViewDto
     {
@@ -13,5 +7,7 @@ namespace GymSystem.BLL.Dtos
         public string Description { get; set; }
         public bool IsAvailable { get; set; }
         public DateTime LastMaintenanceDate { get; set; }
+        public int MaintenanceCount { get; set; } // عدد مرات الصيانة (من MaintainedByUsers)
+        public int ClassUsageCount { get; set; } // عدد الحصص التي تستخدم المعدة (من UsedInClasses)
     }
 }

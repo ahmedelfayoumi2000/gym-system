@@ -1,6 +1,7 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
+using GymSystem.BLL.Interfaces.Business;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,21 +11,19 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+
+
+    //الحضور اليومي
     public class AttendanceController : BaseApiController
     {
-        private readonly IAttendaceRepo _attendaceRepo;
+        private readonly IDailyAttendanceRepo _attendanceRepo;
 
-        public AttendanceController(IAttendaceRepo attendaceRepo)
+        public AttendanceController(IDailyAttendanceRepo attendanceRepo)
         {
-            _attendaceRepo = attendaceRepo ?? throw new ArgumentNullException(nameof(attendaceRepo));
+            _attendanceRepo = attendanceRepo ?? throw new ArgumentNullException(nameof(attendanceRepo));
         }
 
-        /// <summary>
-        /// Retrieves all attendance records for a specific user by UserCode.
-        /// </summary>
-        [Authorize(Roles = "Admin, Receptionist")]
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet("getattendances")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -36,7 +35,8 @@ namespace GymSystem.API.Controllers
             {
                 return BadRequest(new ApiValidationErrorResponse
                 {
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                        .Concat(new[] { "UserCode is required." }).ToList(),
                     StatusCode = 400,
                     Message = "Invalid request data"
                 });
@@ -44,57 +44,60 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                var attendances = await _attendaceRepo.GetAttendancesForUserAsync(userCode);
+                var attendances = await _attendanceRepo.GetAttendancesForUserAsync(userCode);
                 if (attendances == null || !attendances.Any())
                 {
-                    return NotFound(new ApiResponse(404, "No attendances found for the specified user."));
+                    return NotFound(new ApiResponse(404, "No attendance records found for the specified user."));
                 }
 
-                return Ok(new ApiResponse(200, "Attendances retrieved successfully", attendances));
+                return Ok(new ApiResponse(200, "Daily attendances retrieved successfully", attendances));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while retrieving attendances", ex.Message));
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while retrieving daily attendances", ex.Message));
             }
         }
 
-        /// <summary>
-        /// Adds a new attendance record for a user.
-        /// </summary>
-        [Authorize(Roles = "Admin, Receptionist")]
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddAttendance([FromBody] AttendanceDto attendance)
+        public async Task<IActionResult> AddAttendance([FromBody] DailyAttendanceDto attendanceDto)
         {
-            if (!ModelState.IsValid || attendance == null)
+            if (!ModelState.IsValid || attendanceDto == null)
             {
                 return BadRequest(new ApiValidationErrorResponse
                 {
                     Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
                     StatusCode = 400,
-                    Message = "Invalid attendance data"
+                    Message = "Invalid daily attendance data"
                 });
             }
 
             try
             {
-                var response = await _attendaceRepo.AddAttendanceAsync(attendance);
-                return response.StatusCode == 200
-                    ? Ok(response)
-                    : BadRequest(response);
+                var response = await _attendanceRepo.AddAttendanceAsync(attendanceDto);
+                return response.StatusCode switch
+                {
+                    201 => StatusCode(StatusCodes.Status201Created, response),
+                    400 => BadRequest(response),
+                    404 => NotFound(response),
+                    500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                    _ => StatusCode(response.StatusCode ?? 500, response)
+                };
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while adding attendance", ex.Message));
+                return BadRequest( new ApiExceptionResponse(500, "An error occurred while adding daily attendance", ex.Message));
             }
         }
 
         /// <summary>
-        /// Deletes an attendance record by its ID.
+        /// Deletes a daily attendance record by its ID.
         /// </summary>
-        [Authorize(Roles = "Admin, Receptionist")]
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -106,7 +109,8 @@ namespace GymSystem.API.Controllers
             {
                 return BadRequest(new ApiValidationErrorResponse
                 {
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).Concat(new[] { "Attendance ID must be a positive integer." }).ToList(),
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                        .Concat(new[] { "Attendance ID must be a positive integer." }).ToList(),
                     StatusCode = 400,
                     Message = "Invalid request data"
                 });
@@ -114,17 +118,19 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                var response = await _attendaceRepo.DeleteAttendanceAsync(id);
+                var response = await _attendanceRepo.DeleteAttendanceAsync(id);
                 return response.StatusCode switch
                 {
                     200 => Ok(response),
                     404 => NotFound(response),
-                    _ => BadRequest(response)
+                    400 => BadRequest(response),
+                    500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                    _ => StatusCode(response.StatusCode ?? 500, response)
                 };
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while deleting attendance", ex.Message));
+                return BadRequest(new ApiExceptionResponse(500, "An error occurred while deleting daily attendance", ex.Message));
             }
         }
     }

@@ -46,7 +46,7 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IResponceCacheService, ResponceCacheService>();
             services.AddScoped<ITrainerService, TrainerService>();
-            services.AddScoped<IAttendaceRepo, AttendaceRepo>();
+            services.AddScoped<IDailyAttendanceRepo, DailyAttendanceRepo>();
             services.AddScoped<IFeedbackRepo, FeedbackRepo>();
             services.AddScoped<IBMIRecordRepo, BMIRecordRepo>();
             services.AddScoped<IUserRepository, UserRepository>();
@@ -56,6 +56,8 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IMealRepo, MealRepository>();
             services.AddScoped<IMembershipRepo, MembershipRepository>();
             services.AddScoped<IEquipmentRepo, EquipmentRepo>();
+            services.AddScoped<IDailyAttendanceRepo, DailyAttendanceRepo>();
+
             //services.AddScoped<IExerciseCategoryRepo, ExerciseCategoryRepo>();
             //services.AddScoped<IWorkoutPlanRepo, WorkoutPlanRepo>();
             //services.AddScoped<IExerciseRepo, ExerciseRepo>();

@@ -1,16 +1,16 @@
 ﻿using GymSystem.DAL.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace GymSystem.BLL.Specifications.AttendanceByUserCode
 {
-    internal class AttendanceByUserCodeSpec : BaseSpecification<Attendance>
+    public class AttendanceByUserCodeSpec : BaseSpecification<DailyAttendance>
     {
-        public AttendanceByUserCodeSpec(string userCode) : base(a => a.User.UserCode == userCode)
+        public AttendanceByUserCodeSpec(string userCode)
         {
+            Criteria = a => a.User.UserCode == userCode;
+            AddIncludes(a => a.User);
+            AddIncludes(a => a.Class);
         }
     }
 }

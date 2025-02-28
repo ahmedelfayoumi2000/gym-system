@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Interfaces.Business
 {
+  
     public interface IEquipmentRepo
     {
+     
         Task<IReadOnlyList<EquipmentViewDto>> GetAllAsync(SpecPrams specParams = null);
 
-        //Task<IReadOnlyList<EquipmentViewDto>> GetAllAsync(ISpecification<EquipmentViewDto> spec = null);
-
+      
         Task<EquipmentViewDto> GetByIdAsync(int id);
 
         Task<ApiResponse> CreateAsync(EquipmentCreateDto equipmentCreateDto);

@@ -1,5 +1,4 @@
-﻿// EquipmentController.cs
-using GymSystem.BLL.Dtos;
+﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
@@ -11,12 +10,13 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+     /// <summary>
+     /// اضافة صنف
+     /// </summary>
+    [Authorize(Roles = "Admin,Receptionist")]
     public class EquipmentController : BaseApiController
     {
         private readonly IEquipmentRepo _equipmentRepo;
-
         public EquipmentController(IEquipmentRepo equipmentRepo)
         {
             _equipmentRepo = equipmentRepo ?? throw new ArgumentNullException(nameof(equipmentRepo));
@@ -40,6 +40,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
+     
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -47,14 +48,9 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetEquipmentById(int id)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Equipment ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
+                return BadRequest(CreateValidationError("Equipment ID must be a positive integer."));
             }
 
             try
@@ -80,34 +76,24 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateEquipment([FromBody] EquipmentCreateDto equipmentCreateDto)
         {
-            if (!ModelState.IsValid || equipmentCreateDto == null)
+            if (!IsValidModel(equipmentCreateDto))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
-                    StatusCode = 400,
-                    Message = "Invalid equipment data"
-                });
+                return BadRequest(CreateValidationError("Invalid equipment data"));
             }
 
             try
             {
                 var response = await _equipmentRepo.CreateAsync(equipmentCreateDto);
-                return response.StatusCode switch
-                {
-                    201 => StatusCode(StatusCodes.Status201Created, response),
-                    400 => BadRequest(response),
-                    500 => StatusCode(StatusCodes.Status500InternalServerError, response),
-                    _ => StatusCode(response.StatusCode.Value, response)
-                };
+                return HandleApiResponse(response, StatusCodes.Status201Created);
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "An unexpected error occurred while creating the equipment", ex.Message));
+                    new ApiExceptionResponse(500, "An error occurred while creating the equipment", ex.Message));
             }
         }
 
+     
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -115,36 +101,20 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateEquipment(int id, [FromBody] EquipmentCreateDto equipmentCreateDto)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Equipment ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
+                return BadRequest(CreateValidationError("Equipment ID must be a positive integer."));
             }
 
-            if (!ModelState.IsValid || equipmentCreateDto == null)
+            if (!IsValidModel(equipmentCreateDto))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
-                    StatusCode = 400,
-                    Message = "Invalid equipment data"
-                });
+                return BadRequest(CreateValidationError("Invalid equipment data"));
             }
 
             try
             {
                 var response = await _equipmentRepo.UpdateAsync(id, equipmentCreateDto);
-                return response.StatusCode switch
-                {
-                    200 => Ok(response),
-                    404 => NotFound(response),
-                    400 => BadRequest(response),
-                    _ => StatusCode(response.StatusCode.Value, response)
-                };
+                return HandleApiResponse(response);
             }
             catch (Exception ex)
             {
@@ -153,6 +123,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
+     
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -160,26 +131,15 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteEquipment(int id)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Equipment ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
+                return BadRequest(CreateValidationError("Equipment ID must be a positive integer."));
             }
 
             try
             {
                 var response = await _equipmentRepo.DeleteAsync(id);
-                return response.StatusCode switch
-                {
-                    200 => Ok(response),
-                    404 => NotFound(response),
-                    400 => BadRequest(response),
-                    _ => StatusCode(response.StatusCode.Value, response)
-                };
+                return HandleApiResponse(response);
             }
             catch (Exception ex)
             {
@@ -187,5 +147,36 @@ namespace GymSystem.API.Controllers
                     new ApiExceptionResponse(500, $"An error occurred while deleting equipment with ID {id}", ex.Message));
             }
         }
+
+        #region Private Helper Methods
+
+        private bool IsValidId(int id) => id > 0;
+
+        private bool IsValidModel(object model) => ModelState.IsValid && model != null;
+
+        private ApiValidationErrorResponse CreateValidationError(string message)
+        {
+            return new ApiValidationErrorResponse
+            {
+                Errors = new List<string> { message },
+                StatusCode = 400,
+                Message = "Invalid request data"
+            };
+        }
+
+        private IActionResult HandleApiResponse(ApiResponse response, int successStatusCode = StatusCodes.Status200OK)
+        {
+            return response.StatusCode switch
+            {
+                200 => Ok(response),
+                201 => StatusCode(StatusCodes.Status201Created, response),
+                404 => NotFound(response),
+                400 => BadRequest(response),
+                500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                _ => StatusCode(response.StatusCode ?? 500, response)
+            };
+        }
+
+        #endregion
     }
 }

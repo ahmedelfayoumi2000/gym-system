@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using GymSystem.BLL.Dtos;
+﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using Microsoft.AspNetCore.Authorization;
@@ -7,13 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    // اضافة حصة
     public class ClassController : BaseApiController
     {
         private readonly IClassRepo _classRepo;
@@ -23,28 +20,38 @@ namespace GymSystem.API.Controllers
             _classRepo = classRepo ?? throw new ArgumentNullException(nameof(classRepo));
         }
 
-        /// <summary>
-        /// Retrieves a specific class by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the class to retrieve.</param>
-        /// <returns>The class details if found, or an error response.</returns>
-        [Authorize(Roles = "Admin,Receptionist,Trainer,Member")]
-        [HttpGet("getClass")]
+     
+        [Authorize(Roles = "Admin,Receptionist,Trainer")]
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllClasses()
+        {
+            try
+            {
+                var classes = await _classRepo.GetClasses();
+                var classList = classes.ToList(); 
+                return Ok(new ApiResponse(200, "Classes retrieved successfully", classList));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while retrieving classes", ex.Message));
+            }
+        }
+
+      
+        [Authorize(Roles = "Admin,Receptionist,Trainer")]
+        [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetClass(int id)
+        public async Task<IActionResult> GetClassById(int id)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Class ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
+                return BadRequest(CreateValidationError("Class ID must be a positive integer."));
             }
 
             try
@@ -59,211 +66,124 @@ namespace GymSystem.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while retrieving the class", ex.Message));
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, $"An error occurred while retrieving class with ID {id}", ex.Message));
             }
         }
 
-        /// <summary>
-        /// Retrieves all active classes in the system.
-        /// </summary>
-        /// <returns>A list of all active classes if successful, or an error response.</returns>
-        [Authorize(Roles = "Admin,Receptionist,Trainer,Member")]
-        [HttpGet("getAllClasses")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllClasses()
-        {
-            try
-            {
-                var classes = await _classRepo.GetClasses();
-                return Ok(new ApiResponse(200, "Classes retrieved successfully", classes));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while retrieving classes", ex.Message));
-            }
-        }
-
-        /// <summary>
-        /// Adds a new class to the system.
-        /// </summary>
-        /// <param name="classDto">The class data to add.</param>
-        /// <returns>The result of the operation, including the added class if successful.</returns>
-        [Authorize(Roles = "Admin,Trainer")]
+       
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddClass([FromBody] ClassDto classDto)
+        public async Task<IActionResult> CreateClass([FromBody] ClassDto classDto)
         {
-            if (!ModelState.IsValid || classDto == null)
+            if (!IsValidModel(classDto))
             {
-                return BadRequest(CreateValidationErrorResponse("Invalid class data"));
+                return BadRequest(CreateValidationError("Invalid class data"));
             }
 
             try
             {
-                if (User.IsInRole("Trainer"))
-                {
-                    var trainerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "TrainerId");
-                    if (trainerIdClaim == null || string.IsNullOrWhiteSpace(trainerIdClaim.Value))
-                    {
-                        return BadRequest(new ApiResponse(400, "TrainerId claim is missing or invalid in the token."));
-                    }
-                    if (classDto.TrainerId != trainerIdClaim.Value)
-                    {
-                        return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse(403, "Trainers can only create classes for themselves."));
-                    }
-                }
-
                 var response = await _classRepo.AddClass(classDto);
-                return response.StatusCode == 201
-                    ? StatusCode(StatusCodes.Status201Created, response)
-                    : BadRequest(response);
+                return HandleApiResponse(response, StatusCodes.Status201Created);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while adding the class", ex.Message));
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while creating the class", ex.Message));
             }
         }
 
-        /// <summary>
-        /// Deletes a specific class by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the class to delete.</param>
-        /// <returns>The result of the operation, including confirmation if successful.</returns>
-        [Authorize(Roles = "Admin,Trainer")]
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteClass(int id)
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Class ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
-            }
-
-            try
-            {
-                var classDto = await _classRepo.GetClass(id);
-                if (classDto == null)
-                {
-                    return NotFound(new ApiResponse(404, $"Class with ID {id} not found"));
-                }
-
-                if (User.IsInRole("Trainer"))
-                {
-                    var trainerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "TrainerId");
-                    if (trainerIdClaim == null || string.IsNullOrWhiteSpace(trainerIdClaim.Value))
-                    {
-                        return BadRequest(new ApiResponse(400, "TrainerId claim is missing or invalid in the token."));
-                    }
-                    if (classDto.TrainerId != trainerIdClaim.Value)
-                    {
-                        return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse(403, "Trainers can only delete their own classes."));
-                    }
-                }
-
-                var response = await _classRepo.DeleteClass(id);
-                return response.StatusCode == 200
-                    ? Ok(response)
-                    : response.StatusCode == 404
-                        ? NotFound(response)
-                        : BadRequest(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while deleting the class", ex.Message));
-            }
-        }
-
-        /// <summary>
-        /// Updates an existing class by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the class to update.</param>
-        /// <param name="classDto">The updated class data.</param>
-        /// <returns>The result of the operation, including the updated class if successful.</returns>
-        [Authorize(Roles = "Admin,Trainer")]
+      
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateClass(int id, [FromBody] ClassDto classDto)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiValidationErrorResponse
-                {
-                    Errors = new List<string> { "Class ID must be a positive integer." },
-                    StatusCode = 400,
-                    Message = "Invalid request data"
-                });
+                return BadRequest(CreateValidationError("Class ID must be a positive integer."));
             }
 
-            if (!ModelState.IsValid || classDto == null)
+            if (!IsValidModel(classDto))
             {
-                return BadRequest(CreateValidationErrorResponse("Invalid class data"));
+                return BadRequest(CreateValidationError("Invalid class data"));
             }
 
             try
             {
-                var existingClass = await _classRepo.GetClass(id);
-                if (existingClass == null)
-                {
-                    return NotFound(new ApiResponse(404, $"Class with ID {id} not found"));
-                }
-
-                if (User.IsInRole("Trainer"))
-                {
-                    var trainerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "TrainerId");
-                    if (trainerIdClaim == null || string.IsNullOrWhiteSpace(trainerIdClaim.Value))
-                    {
-                        return BadRequest(new ApiResponse(400, "TrainerId claim is missing or invalid in the token."));
-                    }
-                    if (existingClass.TrainerId != trainerIdClaim.Value || classDto.TrainerId != trainerIdClaim.Value)
-                    {
-                        return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse(403, "Trainers can only update their own classes."));
-                    }
-                }
-
                 var response = await _classRepo.UpdateClass(id, classDto);
-                return response.StatusCode == 200
-                    ? Ok(response)
-                    : response.StatusCode == 404
-                        ? NotFound(response)
-                        : BadRequest(response);
+                return HandleApiResponse(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while updating the class", ex.Message));
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, $"An error occurred while updating class with ID {id}", ex.Message));
             }
         }
 
-        #region Helper Methods
-        private ApiValidationErrorResponse CreateValidationErrorResponse(string message)
+      
+        [Authorize(Roles = "Admin,Receptionist")]
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteClass(int id)
+        {
+            if (!IsValidId(id))
+            {
+                return BadRequest(CreateValidationError("Class ID must be a positive integer."));
+            }
+
+            try
+            {
+                var response = await _classRepo.DeleteClass(id);
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, $"An error occurred while deleting class with ID {id}", ex.Message));
+            }
+        }
+
+        #region Private Helper Methods
+
+        private bool IsValidId(int id) => id > 0;
+
+        private bool IsValidModel(object model) => ModelState.IsValid && model != null;
+
+        private ApiValidationErrorResponse CreateValidationError(string message)
         {
             return new ApiValidationErrorResponse
             {
-                Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
+                Errors = new List<string> { message },
                 StatusCode = 400,
-                Message = message
+                Message = "Invalid request data"
             };
         }
+
+        private IActionResult HandleApiResponse(ApiResponse response, int successStatusCode = StatusCodes.Status200OK)
+        {
+            return response.StatusCode switch
+            {
+                200 => Ok(response),
+                201 => StatusCode(StatusCodes.Status201Created, response),
+                400 => BadRequest(response),
+                404 => NotFound(response),
+                409 => Conflict(response),
+                500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                _ => StatusCode(response.StatusCode ?? 500, response)
+            };
+        }
+
         #endregion
     }
 }

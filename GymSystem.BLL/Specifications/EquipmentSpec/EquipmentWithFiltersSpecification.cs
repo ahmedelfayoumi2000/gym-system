@@ -14,7 +14,7 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
             // التصفية
             if (!string.IsNullOrEmpty(specParams.Search))
             {
-                Criteria = e => e.EquipmentName.ToLower().Contains(specParams.Search);
+                Criteria = e => e.EquipmentName.ToLower().Contains(specParams.Search.ToLower());
             }
 
             // الترتيب

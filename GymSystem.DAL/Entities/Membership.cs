@@ -6,8 +6,6 @@ namespace GymSystem.DAL.Entities
     public class Membership : BaseEntity
     {
         public string ImageUrl { get; set; }
-        public int SubscriptionPlanId { get; set; }
-        public SubscriptionPlan SubscriptionPlan { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal Price { get; set; }

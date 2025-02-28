@@ -98,7 +98,6 @@ try
 
     var identityContext = services.GetRequiredService<AppIdentityDbContext>();
     await identityContext.Database.MigrateAsync();
-	await AppIdentityDbContextSeed2.SeedAsync(identityContext);
 
 
 

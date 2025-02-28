@@ -54,7 +54,7 @@ namespace GymSystem.API.Helpers
 			//====================================================================================
 
 
-			CreateMap<Attendance, AttendanceDto>().ReverseMap();
+			CreateMap<Attendance, DailyAttendanceDto>().ReverseMap();
             CreateMap<Class, ClassDto>().ReverseMap();
             CreateMap<ExerciseCategory, ExerciseCategoryDto>().ReverseMap();
             CreateMap<WorkoutPlan, WorkoutPlanDto>().ReverseMap();
