@@ -14,6 +14,6 @@ namespace GymSystem.BLL.Interfaces.Auth
         Task<ApiResponse> ResetPasswordAsync(ResetPassword dto);
         Task<ApiResponse> ChangePasswordAsync(Guid userId, string oldPassword, string newPassword);
         Task<ApiResponse> ResendConfirmationEmailAsync(string email, Func<string, string, string> generateCallBackUrl);
-        Task<ApiResponse> LogoutAsync(string userId); // إضافة دالة Logout
+        Task<ApiResponse> LogoutAsync(string userId); 
     }
 }

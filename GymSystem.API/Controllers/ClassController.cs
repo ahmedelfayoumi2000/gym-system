@@ -1,6 +1,7 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
+using GymSystem.BLL.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,27 +11,28 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    // اضافة حصة
+    //إضافة حصة 
     public class ClassController : BaseApiController
     {
         private readonly IClassRepo _classRepo;
 
+      
         public ClassController(IClassRepo classRepo)
         {
             _classRepo = classRepo ?? throw new ArgumentNullException(nameof(classRepo));
         }
 
-     
+       
         [Authorize(Roles = "Admin,Receptionist,Trainer")]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllClasses()
+        public async Task<IActionResult> GetAllClasses([FromQuery] SpecPrams specParams = null)
         {
             try
             {
-                var classes = await _classRepo.GetClasses();
-                var classList = classes.ToList(); 
+                var classes = await _classRepo.GetClasses(specParams);
+                var classList = classes.ToList();
                 return Ok(new ApiResponse(200, "Classes retrieved successfully", classList));
             }
             catch (Exception ex)
@@ -40,7 +42,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+    
         [Authorize(Roles = "Admin,Receptionist,Trainer")]
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -71,7 +73,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-       
+      
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -128,7 +130,6 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

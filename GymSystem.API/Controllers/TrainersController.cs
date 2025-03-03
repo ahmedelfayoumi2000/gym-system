@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace GymSystem.API.Controllers
 {
    
-    [Authorize(Roles = "Admin")] // Only Admin can manage trainers
+    [Authorize(Roles = "Admin")] 
     public class TrainersController : BaseApiController
     {
         private readonly ITrainerService _trainerService;

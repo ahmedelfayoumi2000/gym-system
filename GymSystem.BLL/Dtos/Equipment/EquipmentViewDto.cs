@@ -1,4 +1,4 @@
-﻿namespace GymSystem.BLL.Dtos
+﻿namespace GymSystem.BLL.Dtos.Equipment
 {
     public class EquipmentViewDto
     {

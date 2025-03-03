@@ -15,7 +15,7 @@ namespace GymSystem.BLL.Interfaces
 
         Task<T> GetByIdWithSpecAsync(ISpecification<T> spec);
         Task<IReadOnlyList<T>> GetAllWithSpecAsync(ISpecification<T> spec);
-
+        Task<T> GetEntityWithSpecAsync(ISpecification<T> spec);
         Task<int> GetCountAsync(ISpecification<T> spec);
 
         Task Add(T entity);

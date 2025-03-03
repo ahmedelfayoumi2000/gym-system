@@ -1,45 +1,35 @@
-﻿using GymSystem.BLL.Specifications;
-using GymSystem.DAL.Entities;
-using Microsoft.IdentityModel.Tokens;
+﻿using GymSystem.DAL.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
 
-public class MonthlyMembershipWithFiltersSpecification : BaseSpecification<MonthlyMembership>
+namespace GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci
 {
-    public MonthlyMembershipWithFiltersSpecification(SpecPrams specParams) : base()
+    // Specification for filtering memberships
+    public class MonthlyMembershipWithFiltersSpecification : BaseSpecification<MonthlyMembership>
     {
-        if (!string.IsNullOrEmpty(specParams.Search))
+        public MonthlyMembershipWithFiltersSpecification(SpecPrams specParams) : base()
         {
-            Criteria = m => m.User.DisplayName.ToLower().Contains(specParams.Search.ToLower());
-        }
-
-        if (!string.IsNullOrEmpty(specParams.Sort))
-        {
-            switch (specParams.Sort.ToLower())
+            if (!string.IsNullOrEmpty(specParams.Search))
             {
-                case "startdate":
-                    AddOrderBy(m => m.StartDate);
-                    break;
-                case "startdatedesc":
-                    AddOrderByDescending(m => m.StartDate);
-                    break;
-                case "isactive":
-                    AddOrderBy(m => m.IsActive);
-                    break;
-                case "isactivedesc":
-                    AddOrderByDescending(m => m.IsActive);
-                    break;
-                default:
-                    AddOrderBy(m => m.Id);
-                    break;
+                Criteria = m => (m.User.DisplayName.ToLower().Contains(specParams.Search.ToLower()) ||
+                    m.Class.ClassName.ToLower().Contains(specParams.Search.ToLower())) && !m.IsDeleted;
+            }
+            else
+            {
+                Criteria = m => !m.IsDeleted;
+            }
+
+            AddIncludes(m => m.User);
+            AddIncludes(m => m.Class);
+
+            if (specParams.PageSize > 0)
+            {
+                ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
             }
         }
-
-        if (specParams.PageSize > 0)
-        {
-            ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
-        }
-
-        AddIncludes(m => m.User);
-        AddIncludes(m => m.Class);
-        AddIncludes(m => m.Plan);
     }
 }

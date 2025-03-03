@@ -1,4 +1,4 @@
-﻿using GymSystem.BLL.Dtos;
+﻿using GymSystem.BLL.Dtos.Equipment;
 using System;
 using System.Collections.Generic;
 using System.Linq;

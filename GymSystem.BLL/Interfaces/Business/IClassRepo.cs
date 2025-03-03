@@ -1,5 +1,6 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
+using GymSystem.BLL.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,8 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> UpdateClass(int id, ClassDto classDto);
         public Task<ApiResponse> DeleteClass(int id);
         public Task<ClassDto> GetClass(int id);
-        public Task<IEnumerable<ClassDto>> GetClasses();
+        Task<IEnumerable<ClassDto>> GetClasses(SpecPrams specParams); 
+
 
     }
 }

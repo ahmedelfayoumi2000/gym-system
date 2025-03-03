@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GymSystem.BLL.Dtos
+namespace GymSystem.BLL.Dtos.Equipment
 {
     public class EquipmentCreateDto
     {

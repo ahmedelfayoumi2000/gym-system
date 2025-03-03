@@ -11,13 +11,15 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
     {
         public EquipmentWithFiltersSpecification(SpecPrams specParams) : base()
         {
-            // التصفية
             if (!string.IsNullOrEmpty(specParams.Search))
             {
-                Criteria = e => e.EquipmentName.ToLower().Contains(specParams.Search.ToLower());
+                Criteria = e => e.EquipmentName.ToLower().Contains(specParams.Search.ToLower()) && !e.IsDeleted;
+            }
+            else
+            {
+                Criteria = e => !e.IsDeleted;
             }
 
-            // الترتيب
             if (!string.IsNullOrEmpty(specParams.Sort))
             {
                 switch (specParams.Sort.ToLower())
@@ -28,11 +30,11 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
                     case "namedesc":
                         AddOrderByDescending(e => e.EquipmentName);
                         break;
-                    case "availability":
-                        AddOrderBy(e => e.IsAvailable);
+                    case "lastmaintenance":
+                        AddOrderBy(e => e.LastMaintenanceDate);
                         break;
-                    case "availabilitydesc":
-                        AddOrderByDescending(e => e.IsAvailable);
+                    case "lastmaintenancedesc":
+                        AddOrderByDescending(e => e.LastMaintenanceDate);
                         break;
                     default:
                         AddOrderBy(e => e.Id);
@@ -40,15 +42,12 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
                 }
             }
 
-            // التقسيم (Pagination)
             if (specParams.PageSize > 0)
             {
                 ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
             }
-
-            // تحميل العلاقات
-            AddIncludes(e => e.MaintainedByUsers);
-            AddIncludes(e => e.UsedInClasses);
         }
+
     }
 }
+

@@ -16,6 +16,8 @@ namespace GymSystem.DAL.Entities
 
         public ICollection<EquipmentMaintenance> MaintainedByUsers { get; set; } = new List<EquipmentMaintenance>();
         public ICollection<ClassEquipment> UsedInClasses { get; set; } = new List<ClassEquipment>();
+        public ICollection<Product> Products { get; set; } = new List<Product>(); 
+    
     }
 
 }

@@ -39,7 +39,7 @@ namespace GymSystem.DAL.Identity
             const string adminPassword = "Pa$$w0rd123!";
             const string adminRole = "Admin";
 
-            // التحقق من عدم وجود المستخدم مسبقًا
+
             if (await userManager.FindByEmailAsync(adminUser.Email) == null)
             {
                 var createResult = await userManager.CreateAsync(adminUser, adminPassword);

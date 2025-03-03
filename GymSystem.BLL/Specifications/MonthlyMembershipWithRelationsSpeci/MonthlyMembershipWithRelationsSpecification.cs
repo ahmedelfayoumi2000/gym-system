@@ -8,20 +8,19 @@ using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci
 {
+    // Specification for including User and Class relations
     public class MonthlyMembershipWithRelationsSpecification : BaseSpecification<MonthlyMembership>
     {
-        public MonthlyMembershipWithRelationsSpecification()
+        public MonthlyMembershipWithRelationsSpecification() : base()
         {
             AddIncludes(m => m.User);
             AddIncludes(m => m.Class);
-            AddIncludes(m => m.Plan);
         }
 
         public MonthlyMembershipWithRelationsSpecification(Expression<Func<MonthlyMembership, bool>> criteria) : base(criteria)
         {
             AddIncludes(m => m.User);
             AddIncludes(m => m.Class);
-            AddIncludes(m => m.Plan);
         }
     }
 }
