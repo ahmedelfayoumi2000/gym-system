@@ -4,6 +4,7 @@ using GymSystem.DAL.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymSystem.DAL.Data.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    partial class AppIdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250304165852_AddOrderTable")]
+    partial class AddOrderTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -668,16 +671,14 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<int>("Count")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedByUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -687,14 +688,9 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("ProductId");
 
                     b.ToTable("Orders");
                 });
@@ -1231,17 +1227,11 @@ namespace GymSystem.DAL.Data.Migrations
                 {
                     b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("GymSystem.DAL.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Product", b =>

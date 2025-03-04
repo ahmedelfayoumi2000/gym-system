@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.Order;
 using GymSystem.BLL.Dtos.Product;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
@@ -68,8 +69,7 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-        // دالة جلب كل المنتجات
-        //  الفرونت عايز كل المنتجات، بجيبهاله كلها مع التفاصيل
+      
         public async Task<IEnumerable<ProductViewDto>> GetAllAsync()
         {
             try
@@ -87,8 +87,7 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-        // دالة تعديل منتج
-        //  الفرونت بيبعتلي بيانات منتج معدل، بظبطه وأرجع الـ DTO الجديد
+        
         public async Task<ApiResponse> UpdateAsync(int productId, ProductCreateDto productCreateDto)
         {
             if (productId <= 0)
@@ -128,5 +127,8 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiExceptionResponse(500, "An error occurred while updating the product", ex.Message);
             }
         }
+
+    
     }
+
 }

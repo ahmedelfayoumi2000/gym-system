@@ -49,5 +49,6 @@ namespace GymSystem.DAL.Identity
         public DbSet<EquipmentMaintenance> EquipmentMaintenances { get; set; }
         public DbSet<ClassEquipment> ClassEquipments { get; set; }
         public DbSet<Product> products { get; set; }
+        public DbSet<Order> Orders { get; set; }
     }
 }
