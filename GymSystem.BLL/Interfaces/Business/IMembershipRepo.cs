@@ -1,4 +1,5 @@
 ﻿using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Specifications;
 using System;
@@ -19,5 +20,14 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<IEnumerable<MonthlyMembershipDto>> GetActiveMembershipsAsync();
         Task<IEnumerable<MonthlyMembershipDto>> GetSuspendedMembershipsAsync();
         Task<ApiResponse> RenewMembershipAsync(int membershipId);
+
+
+        //=====================
+        //Mopile
+        Task<UserProfileDto> GetUserProfileAsync(string userId);
+        Task<ApiResponse> UpdateProfileAsync(string userId, UpdateProfileDto profileDto);
+        Task<ApiResponse> UpdateGoalAsync(string userId, UpdateGoalDto goalDto);
+        Task<ApiResponse> UpdateLevelAsync(string userId, UpdateLevelDto levelDto);
+        Task<ApiResponse> ConfirmProfileAsync(string userId);
     }
 }

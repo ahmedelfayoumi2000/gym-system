@@ -1,9 +1,11 @@
 ﻿using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GymSystem.API.Controllers
 {
@@ -156,9 +158,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all active memberships (IsActive = true).
-        /// </summary>
+
         [HttpGet("active")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -178,9 +178,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all suspended memberships (IsActive = false).
-        /// </summary>
+     
         [HttpGet("suspended")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -200,9 +198,6 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Renews a membership by extending its end date and setting it to active.
-        /// </summary>
         [HttpPost("renew/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -226,6 +221,138 @@ namespace GymSystem.API.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, $"An error occurred while renewing membership with ID {id}", ex.Message));
+            }
+        }
+
+        [Authorize]
+        [HttpGet("profile")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var profile = await _membershipRepo.GetUserProfileAsync(userId);
+                if (profile == null)
+                {
+                    return NotFound(new ApiResponse(404, "User profile not found"));
+                }
+
+                return Ok(new ApiResponse(200, "Profile retrieved successfully", profile));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while retrieving the profile", ex.Message));
+            }
+        }
+
+       
+
+        [Authorize]
+        [HttpPut("profile")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto profileDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(CreateValidationError("Invalid profile data"));
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var response = await _membershipRepo.UpdateProfileAsync(userId, profileDto);
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while updating the profile", ex.Message));
+            }
+        }
+
+        
+
+        [Authorize]
+        [HttpPut("profile/goal")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateGoal([FromBody] UpdateGoalDto goalDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(CreateValidationError("Invalid goal data"));
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var response = await _membershipRepo.UpdateGoalAsync(userId, goalDto);
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while updating the goal", ex.Message));
+            }
+        }
+
+       
+
+        [Authorize]
+        [HttpPut("profile/level")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateLevel([FromBody] UpdateLevelDto levelDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(CreateValidationError("Invalid fitness level data"));
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var response = await _membershipRepo.UpdateLevelAsync(userId, levelDto);
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while updating the fitness level", ex.Message));
+            }
+        }
+
+      
+
+        [Authorize]
+        [HttpPost("profile/confirm")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ConfirmProfile()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var response = await _membershipRepo.ConfirmProfileAsync(userId);
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while confirming the profile", ex.Message));
             }
         }
 

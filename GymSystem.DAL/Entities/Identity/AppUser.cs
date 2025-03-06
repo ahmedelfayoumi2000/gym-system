@@ -36,8 +36,9 @@ namespace GymSystem.DAL.Entities.Identity
 			}
 		}
 
-	
-
+        public bool IsProfileConfirmed { get; set; }
+        public string Goal { get; set; } // "WeightLoss", "WeightGain", "MuscleGain", "BetterBodyShape"
+        public string FitnessLevel { get; set; } // "Beginner", "Intermediate", "Advanced"
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
         public ICollection<DailyAttendance> DailyAttendances { get; set; } = new List<DailyAttendance>();
@@ -53,6 +54,7 @@ namespace GymSystem.DAL.Entities.Identity
         public ICollection<RefreshToken> RefreshTokens { get; set; }
 
         public ICollection<Class> Classes { get; set; } = new List<Class>(); 
-        public ICollection<EquipmentMaintenance> MaintainedEquipments { get; set; } = new List<EquipmentMaintenance>(); 
+        public ICollection<EquipmentMaintenance> MaintainedEquipments { get; set; } = new List<EquipmentMaintenance>();
+        
     }
 }

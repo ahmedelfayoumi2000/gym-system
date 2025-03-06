@@ -12,6 +12,6 @@ namespace GymSystem.BLL.Dtos.Product
         public string Name { get; set; }
         public decimal Price { get; set; }
         public int Count { get; set; }
-        public bool IsAvailable { get; set; }
+        //public bool IsAvailable { get; set; }
     }
 }

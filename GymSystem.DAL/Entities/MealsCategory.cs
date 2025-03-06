@@ -16,5 +16,6 @@ namespace GymSystem.DAL.Entities
         public string CategoryName { get; set; }
         public bool IsDeleted { get; set; }
         public ICollection<Meal> Meals { get; set; }
+        public ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
     }
 }

@@ -10,5 +10,5 @@
         public bool IsAvailable { get; set; }
         public bool IsDeleted { get; set; }
 
-    }
+    }   
 }

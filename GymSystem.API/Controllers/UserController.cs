@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Dtos.Role;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.DAL.Entities.Enums.Auth;
 using GymSystem.DAL.Entities.Identity;

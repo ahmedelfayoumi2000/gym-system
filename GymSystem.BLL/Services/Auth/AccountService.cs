@@ -1,4 +1,5 @@
 ﻿using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Auth;
 using GymSystem.DAL.Entities.Enums.Auth;
@@ -209,7 +210,6 @@ namespace GymSystem.BLL.Services.Auth
                 var (jwtToken, refreshToken) = await _tokenService.CreateTokenAsync(user);
                 var roles = await _userManager.GetRolesAsync(user);
 
-                // إضافة المستخدم إلى قائمة المستخدمين النشطين
                 _activeUserManager.AddUser(user.Id);
 
                 _logger.LogInformation("User {Email} logged in successfully with ID: {UserId}", dto.Email, user.Id);
@@ -234,7 +234,6 @@ namespace GymSystem.BLL.Services.Auth
             }
         }
 
-        // دالة تسجيل الخروج
         public async Task<ApiResponse> LogoutAsync(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -502,6 +501,8 @@ namespace GymSystem.BLL.Services.Auth
                 throw new Exception($"Failed to send email: {ex.Message}", ex);
             }
         }
+
+      
         #endregion
 
         #region Private Helper Methods
@@ -563,6 +564,8 @@ namespace GymSystem.BLL.Services.Auth
             return $"<h1>Dear {username}! Welcome to ATHLETIC GYM.</h1>" +
                    $"<p>Please <a href='{callbackUrl}'>Click Here</a> to confirm your email.</p>";
         }
+
+      
         #endregion
     }
 }

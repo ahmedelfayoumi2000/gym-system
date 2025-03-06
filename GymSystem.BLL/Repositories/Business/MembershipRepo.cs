@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
@@ -335,6 +336,155 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogError(ex, "Error renewing membership with ID: {Id}", membershipId);
                 return new ApiExceptionResponse(500, $"Failed to renew membership: {ex.Message}");
+            }
+        }
+
+        public async Task<UserProfileDto> GetUserProfileAsync(string userId)
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving profile for user ID: {UserId}", userId);
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    return null;
+                }
+
+                var profile = _mapper.Map<UserProfileDto>(user);
+                _logger.LogInformation("Profile retrieved successfully for user ID: {UserId}", userId);
+                return profile;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving profile for user ID: {UserId}", userId);
+                throw new ApplicationException($"Failed to retrieve profile: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<ApiResponse> UpdateProfileAsync(string userId, UpdateProfileDto profileDto)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to update profile for user ID: {UserId}", userId);
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    return new ApiResponse(404, "User not found.");
+                }
+
+                _mapper.Map(profileDto, user);
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning("Failed to update profile for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return new ApiResponse(400, "Failed to update profile.", result.Errors);
+                }
+
+                var updatedProfile = _mapper.Map<UserProfileDto>(user);
+                _logger.LogInformation("Profile updated successfully for user ID: {UserId}", userId);
+                return new ApiResponse(200, "Profile updated successfully", updatedProfile);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile for user ID: {UserId}", userId);
+                return new ApiExceptionResponse(500, "An error occurred while updating the profile", ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse> UpdateGoalAsync(string userId, UpdateGoalDto goalDto)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to update goal for user ID: {UserId}", userId);
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    return new ApiResponse(404, "User not found.");
+                }
+
+                user.Goal = goalDto.Goal;
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning("Failed to update goal for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return new ApiResponse(400, "Failed to update goal.", result.Errors);
+                }
+
+                _logger.LogInformation("Goal updated successfully for user ID: {UserId}", userId);
+                return new ApiResponse(200, "Goal updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating goal for user ID: {UserId}", userId);
+                return new ApiExceptionResponse(500, "An error occurred while updating the goal", ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse> UpdateLevelAsync(string userId, UpdateLevelDto levelDto)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to update fitness level for user ID: {UserId}", userId);
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    return new ApiResponse(404, "User not found.");
+                }
+
+                user.FitnessLevel = levelDto.FitnessLevel;
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning("Failed to update fitness level for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return new ApiResponse(400, "Failed to update fitness level.", result.Errors);
+                }
+
+                _logger.LogInformation("Fitness level updated successfully for user ID: {UserId}", userId);
+                return new ApiResponse(200, "Fitness level updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating fitness level for user ID: {UserId}", userId);
+                return new ApiExceptionResponse(500, "An error occurred while updating the fitness level", ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse> ConfirmProfileAsync(string userId)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to confirm profile for user ID: {UserId}", userId);
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    return new ApiResponse(404, "User not found.");
+                }
+
+                user.IsProfileConfirmed = true;
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning("Failed to confirm profile for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return new ApiResponse(400, "Failed to confirm profile.", result.Errors);
+                }
+
+                _logger.LogInformation("Profile confirmed successfully for user ID: {UserId}", userId);
+                return new ApiResponse(200, "Profile confirmed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error confirming profile for user ID: {UserId}", userId);
+                return new ApiExceptionResponse(500, "An error occurred while confirming the profile", ex.Message);
             }
         }
     }

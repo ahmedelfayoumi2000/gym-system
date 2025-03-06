@@ -23,16 +23,15 @@ namespace GymSystem.BLL.Repositories.Business
 
         public ProductRepo(
             IUnitOfWork unitOfWork,
-            IMapper mapper)
-            //ILogger<ProductRepo> logger
+            IMapper mapper,
+            ILogger<ProductRepo> logger)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            //_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // دالة إضافة منتج جديد
-        // : الفرونت بيبعتلي بيانات منتج، بشوف لو موجود قبل كدا، لو لأ بضيفه وأرجع الـ DTO
+       
         public async Task<ApiResponse> CreateAsync(ProductCreateDto productCreateDto)
         {
             if (productCreateDto == null)
@@ -64,7 +63,6 @@ namespace GymSystem.BLL.Repositories.Business
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "حصل مشكلة وأنا بضيف المنتج {Name}", productCreateDto.Name);
                 return new ApiExceptionResponse(500, "An error occurred while creating the product", ex.Message);
             }
         }

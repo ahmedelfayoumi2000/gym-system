@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GymSystem.BLL.Dtos
+namespace GymSystem.BLL.Dtos.User
 {
     public class UserDto
     {

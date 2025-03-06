@@ -4,7 +4,9 @@ using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Dtos.Equipment;
 using GymSystem.BLL.Dtos.NutritionPlan;
 using GymSystem.BLL.Dtos.Order;
+using GymSystem.BLL.Dtos.Product;
 using GymSystem.BLL.Dtos.Trainer;
+using GymSystem.BLL.Dtos.User;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Identity;
 
@@ -76,6 +78,13 @@ namespace GymSystem.API.Helpers
             CreateMap<Order, OrderViewDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
                 .ForMember(dest => dest.CreatedByUserName, opt => opt.MapFrom(src => src.CreatedByUser.DisplayName));
+
+            CreateMap<ProductCreateDto, Product>()
+                .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(src => false)); // Default value for IsDeleted
+              
+            // Mapping من Product لـ ProductViewDto
+            CreateMap<Product, ProductViewDto>();
+
         }
     }
 }

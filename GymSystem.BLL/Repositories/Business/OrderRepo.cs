@@ -54,8 +54,6 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                _logger.LogInformation("Attempting to create order with name: {Name} for Product ID: {ProductId}",
-                    orderCreateDto.Name, orderCreateDto.ProductId);
 
                 var productSpec = new BaseSpecification<Product>(p => p.Id == orderCreateDto.ProductId && !p.IsDeleted && p.IsAvailable);
                 var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(productSpec);
@@ -96,7 +94,6 @@ namespace GymSystem.BLL.Repositories.Business
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to save order with name: {Name} and update product stock.", orderCreateDto.Name);
                     return new ApiResponse(500, "Failed to save the order and update product stock in the database.");
                 }
 
@@ -109,7 +106,6 @@ namespace GymSystem.BLL.Repositories.Business
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating order with name: {Name}", orderCreateDto.Name);
                 return new ApiExceptionResponse(500, "An error occurred while creating the order and updating product stock", ex.Message);
             }
         }
