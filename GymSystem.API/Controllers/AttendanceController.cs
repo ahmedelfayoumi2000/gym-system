@@ -1,4 +1,4 @@
-﻿using GymSystem.BLL.Dtos;
+﻿using GymSystem.BLL.Dtos.Attendance;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
@@ -133,5 +133,100 @@ namespace GymSystem.API.Controllers
                 return BadRequest(new ApiExceptionResponse(500, "An error occurred while deleting daily attendance", ex.Message));
             }
         }
+
+        /// <summary>
+        /// Generates a QR Code for a user to use for check-in.
+        /// </summary>
+        [HttpGet("qrcode/{userId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [Authorize(Roles = "Admin,Receptionist,Member")] 
+        public async Task<IActionResult> GenerateQRCode(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(new ApiResponse(400, "User ID cannot be empty."));
+            }
+
+            try
+            {
+                var qrCodeDto = await _attendanceRepo.GenerateQRCodeAsync(userId);
+                return Ok(new ApiResponse(200, "QR Code generated successfully", qrCodeDto));
+            }
+            catch (ApplicationException ex)
+            {
+                return NotFound(new ApiResponse(404, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while generating the QR Code", ex.Message));
+            }
+        }
+
+        [HttpPost("checkin")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [Authorize(Roles = "Admin,Receptionist")] 
+        public async Task<IActionResult> CheckIn([FromBody] AttendanceCheckInDto checkInDto)
+        {
+            if (!ModelState.IsValid || checkInDto == null)
+            {
+                return BadRequest(CreateValidationError("Invalid check-in data"));
+            }
+
+            try
+            {
+                var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    return Unauthorized(new ApiResponse(401, "User not authenticated. Please provide a valid token."));
+                }
+
+                var response = await _attendanceRepo.CheckInAsync(checkInDto, currentUserId);
+                return HandleApiResponse(response, StatusCodes.Status201Created);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while recording the check-in", ex.Message));
+            }
+        }
+
+        #region Private Helper Methods
+
+        private ApiValidationErrorResponse CreateValidationError(string message)
+        {
+            return new ApiValidationErrorResponse
+            {
+                Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
+                StatusCode = 400,
+                Message = message
+            };
+        }
+
+        private IActionResult HandleApiResponse(ApiResponse response, int successStatusCode = StatusCodes.Status200OK)
+        {
+            return response.StatusCode switch
+            {
+                200 => Ok(response),
+                201 => StatusCode(StatusCodes.Status201Created, response),
+                400 => BadRequest(response),
+                401 => Unauthorized(response),
+                404 => NotFound(response),
+                409 => Conflict(response),
+                500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                _ => StatusCode(response.StatusCode ?? 500, response)
+            };
+        }
+
+        #endregion
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GymSystem.API.DTOs.Trainer;
 using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.Attendance;
 using GymSystem.BLL.Dtos.Equipment;
 using GymSystem.BLL.Dtos.NutritionPlan;
 using GymSystem.BLL.Dtos.Order;

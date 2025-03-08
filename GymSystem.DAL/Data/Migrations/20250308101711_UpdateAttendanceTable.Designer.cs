@@ -4,6 +4,7 @@ using GymSystem.DAL.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymSystem.DAL.Data.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    partial class AppIdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250308101711_UpdateAttendanceTable")]
+    partial class UpdateAttendanceTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,9 +32,6 @@ namespace GymSystem.DAL.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AppUserId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("AttendanceDate")
                         .HasColumnType("datetime2");
@@ -55,19 +55,11 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
 
                     b.HasIndex("ClassId");
 
                     b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Attendances");
                 });
@@ -1029,32 +1021,21 @@ namespace GymSystem.DAL.Data.Migrations
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Attendance", b =>
                 {
-                    b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", null)
-                        .WithMany("Attendances")
-                        .HasForeignKey("AppUserId");
-
                     b.HasOne("GymSystem.DAL.Entities.Class", "Class")
                         .WithMany("Attendances")
                         .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "CreatedByUser")
+                        .WithMany("Attendances")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Class");
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.BMIRecord", b =>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GymSystem.BLL.Dtos
+namespace GymSystem.BLL.Dtos.Attendance
 {
     public class DailyAttendanceDto
     {
