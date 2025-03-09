@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
+using System.Security.Claims;
+using System.Security;
 using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
@@ -134,37 +136,42 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Generates a QR Code for a user to use for check-in.
-        /// </summary>
-        [HttpGet("qrcode/{userId}")]
+       
+        [HttpGet("generate-qr")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [Authorize(Roles = "Admin,Receptionist,Member")] 
-        public async Task<IActionResult> GenerateQRCode(string userId)
+        [Authorize(Roles = "Admin,Receptionist,Member")]
+        public async Task<IActionResult> GenerateQRCodeAsync()
         {
-            if (string.IsNullOrEmpty(userId))
-            {
-                return BadRequest(new ApiResponse(400, "User ID cannot be empty."));
-            }
-
             try
             {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    return Unauthorized(new ApiResponse(401, "User authentication required."));
+                }
+
+                // Generate the QR Code
                 var qrCodeDto = await _attendanceRepo.GenerateQRCodeAsync(userId);
                 return Ok(new ApiResponse(200, "QR Code generated successfully", qrCodeDto));
             }
-            catch (ApplicationException ex)
+            catch (ArgumentException ex)
             {
-                return NotFound(new ApiResponse(404, ex.Message));
+                return BadRequest(new ApiResponse(400, ex.Message));
             }
-            catch (Exception ex)
+            catch (SecurityException ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "An error occurred while generating the QR Code", ex.Message));
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse(403, ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiExceptionResponse(500, "An unexpected error occurred while generating the QR Code.", ex.Message));
             }
         }
+
 
         [HttpPost("checkin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -184,7 +191,7 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(currentUserId))
                 {
                     return Unauthorized(new ApiResponse(401, "User not authenticated. Please provide a valid token."));
