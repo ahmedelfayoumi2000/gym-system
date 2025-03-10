@@ -13,9 +13,6 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-
-
-    //الحضور اليومي
     public class AttendanceController : BaseApiController
     {
         private readonly IDailyAttendanceRepo _attendanceRepo;
@@ -66,7 +63,7 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddAttendance([FromBody] DailyAttendanceDto attendanceDto)
+        public async Task<IActionResult> AddAttendance([FromBody] AttendanceDto attendanceDto)
         {
             if (!ModelState.IsValid || attendanceDto == null)
             {
@@ -96,9 +93,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes a daily attendance record by its ID.
-        /// </summary>
+       
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

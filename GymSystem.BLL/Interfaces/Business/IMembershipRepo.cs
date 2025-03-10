@@ -1,4 +1,5 @@
 ﻿using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Specifications;
@@ -20,7 +21,7 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<IEnumerable<MonthlyMembershipDto>> GetActiveMembershipsAsync();
         Task<IEnumerable<MonthlyMembershipDto>> GetSuspendedMembershipsAsync();
         Task<ApiResponse> RenewMembershipAsync(int membershipId);
-
+        Task<ApiResponse> StopMembershipAsync(StopMembershipDto stopMembershipDto, string currentUserId);
 
         //=====================
         //Mopile

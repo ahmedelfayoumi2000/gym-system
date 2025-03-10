@@ -25,17 +25,19 @@ namespace GymSystem.API.DTOs.Trainer
         [EnumDataType(typeof(Gender), ErrorMessage = "Invalid gender")]
         public string Gender { get; set; }
 
-        [DateComparison(nameof(EndDate), ErrorMessage = "Start date must be before end date")]
-        public DateTime StartDate { get; set; }
+        //[DateComparison(nameof(EndDate), ErrorMessage = "Start date must be before end date")]
+        //public DateTime StartDate { get; set; }
 
-        [Required(ErrorMessage = "End date is required")]
-        public DateTime EndDate { get; set; }
+        //[Required(ErrorMessage = "End date is required")]
+        //public DateTime EndDate { get; set; }
 
-        
+
         public Address? Address { get; set; }
-        
+
         [Required(ErrorMessage = "Age is required")]
         public uint Age { get; set; }
+        public decimal Salary { get; set; }
+
     }
 
     public enum Gender
@@ -44,4 +46,5 @@ namespace GymSystem.API.DTOs.Trainer
         Female,
         Other
     }
+
 }

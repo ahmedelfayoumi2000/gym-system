@@ -101,7 +101,6 @@ namespace GymSystem.BLL.Repositories.Business
                 createdDto.ProductName = product.Name;
                 createdDto.CreatedByUserName = user.DisplayName;
 
-                _logger.LogInformation("Order {Name} created successfully with ID: {Id}", order.Name, order.Id);
                 return new ApiResponse(201, "Order created successfully and product stock updated", createdDto);
             }
             catch (Exception ex)

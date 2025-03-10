@@ -18,8 +18,8 @@ namespace GymSystem.API.Extentions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-           
-           
+
+
             services.AddDataProtection();
 
             services.Configure<ApiBehaviorOptions>(options =>
@@ -61,7 +61,7 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IProductRepo, ProductRepo>();
             services.AddScoped<IRecipeRepo, RecipeRepo>();
             services.AddScoped<IExerciseRepo, ExerciseRepo>();
-
+            services.AddScoped<IPaymentService, PaymentRepository>();
             return services;
         }
 

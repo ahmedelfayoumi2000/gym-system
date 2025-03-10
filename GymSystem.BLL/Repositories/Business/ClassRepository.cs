@@ -43,14 +43,12 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                _logger.LogInformation("Attempting to add class with name: {ClassName}", classDto.ClassName);
 
-                var classSpec = new BaseSpecification<Class>(c => c.ClassName == classDto.ClassName && !c.IsDeleted);
+                var classSpec = new BaseSpecification<Class>(c => c.ClassName == classDto.MemberName && !c.IsDeleted);
                 var existingClass = await _unitOfWork.Repository<Class>().GetEntityWithSpecAsync(classSpec);
                 if (existingClass != null)
                 {
-                    _logger.LogWarning("Class with name {ClassName} already exists.", classDto.ClassName);
-                    return new ApiResponse(409, $"Class '{classDto.ClassName}' already exists.");
+                    return new ApiResponse(409, $"Class '{classDto.MemberName}' already exists.");
                 }
 
                 var classEntity = _mapper.Map<Class>(classDto);
@@ -59,17 +57,14 @@ namespace GymSystem.BLL.Repositories.Business
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to save class with name: {ClassName}", classDto.ClassName);
                     return new ApiResponse(500, "Failed to save the class to the database.");
                 }
 
                 var createdDto = _mapper.Map<ClassDto>(classEntity);
-                _logger.LogInformation("Class {ClassName} added successfully with ID: {Id}", classDto.ClassName, classEntity.Id);
                 return new ApiResponse(201, "Class added successfully", createdDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding class with name: {ClassName}", classDto.ClassName);
                 return new ApiExceptionResponse(500, $"Failed to add class: {ex.Message}");
             }
         }

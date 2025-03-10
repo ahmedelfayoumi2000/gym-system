@@ -10,21 +10,7 @@ namespace GymSystem.DAL.Configurations
         {
             builder.HasKey(c => c.Id);
 
-            builder.Property(c => c.ClassName)
-                   .IsRequired()
-                   .HasMaxLength(100);
-
-            builder.Property(c => c.Description)
-                   .HasMaxLength(500);
-
-            builder.Property(c => c.ImageUrl)
-                   .HasMaxLength(255);
-
-            builder.Property(c => c.StartTime)
-                   .IsRequired();
-
-            builder.Property(c => c.EndTime)
-                   .IsRequired();
+           
 
             builder.Property(c => c.IsDeleted)
                    .IsRequired()
@@ -40,10 +26,7 @@ namespace GymSystem.DAL.Configurations
                    .HasForeignKey(m => m.ClassId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasMany(c => c.Attendances)
-                   .WithOne(a => a.Class)
-                   .HasForeignKey(a => a.ClassId)
-                   .OnDelete(DeleteBehavior.Cascade);
+          
 
             builder.HasMany(c => c.ClassEquipments)
                    .WithOne(ce => ce.Class)

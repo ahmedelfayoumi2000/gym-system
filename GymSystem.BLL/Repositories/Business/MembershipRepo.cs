@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
@@ -10,6 +11,7 @@ using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using System.Security;
 
 
 namespace GymSystem.BLL.Repositories.Business
@@ -296,19 +298,16 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (membershipId <= 0)
             {
-                _logger.LogWarning("Invalid membership ID: {Id}", membershipId);
                 return new ApiResponse(400, "Membership ID must be a positive integer.");
             }
 
             try
             {
-                _logger.LogInformation("Attempting to renew membership with ID: {Id}", membershipId);
 
                 var spec = new MonthlyMembershipWithRelationsSpecification(m => m.Id == membershipId && !m.IsDeleted);
                 var membership = await _unitOfWork.Repository<MonthlyMembership>().GetEntityWithSpecAsync(spec);
                 if (membership == null)
                 {
-                    _logger.LogWarning("Membership with ID {Id} not found.", membershipId);
                     return new ApiResponse(404, $"Membership with ID {membershipId} not found.");
                 }
 
@@ -319,7 +318,6 @@ namespace GymSystem.BLL.Repositories.Business
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to renew membership with ID: {Id}", membershipId);
                     return new ApiResponse(500, "Failed to renew the membership in the database.");
                 }
 
@@ -329,12 +327,10 @@ namespace GymSystem.BLL.Repositories.Business
                 updatedDto.UserName = user?.DisplayName;
                 updatedDto.ClassName = classEntity?.ClassName;
 
-                _logger.LogInformation("Membership with ID {Id} renewed successfully.", membershipId);
                 return new ApiResponse(200, "Membership renewed successfully", updatedDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error renewing membership with ID: {Id}", membershipId);
                 return new ApiExceptionResponse(500, $"Failed to renew membership: {ex.Message}");
             }
         }
@@ -343,17 +339,14 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Retrieving profile for user ID: {UserId}", userId);
 
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", userId);
                     return null;
                 }
 
                 var profile = _mapper.Map<UserProfileDto>(user);
-                _logger.LogInformation("Profile retrieved successfully for user ID: {UserId}", userId);
                 return profile;
             }
             catch (Exception ex)
@@ -367,12 +360,10 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Attempting to update profile for user ID: {UserId}", userId);
 
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", userId);
                     return new ApiResponse(404, "User not found.");
                 }
 
@@ -380,17 +371,14 @@ namespace GymSystem.BLL.Repositories.Business
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
-                    _logger.LogWarning("Failed to update profile for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
-                    return new ApiResponse(400, "Failed to update profile.", result.Errors);
+                    return new ApiResponse(400, $"Failed to update profile for user ID {userId}.", result.Errors.Select(e => e.Description));
                 }
 
                 var updatedProfile = _mapper.Map<UserProfileDto>(user);
-                _logger.LogInformation("Profile updated successfully for user ID: {UserId}", userId);
                 return new ApiResponse(200, "Profile updated successfully", updatedProfile);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating profile for user ID: {UserId}", userId);
                 return new ApiExceptionResponse(500, "An error occurred while updating the profile", ex.Message);
             }
         }
@@ -399,29 +387,24 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Attempting to update goal for user ID: {UserId}", userId);
 
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", userId);
-                    return new ApiResponse(404, "User not found.");
+                    return new ApiResponse(404, $"User with ID {userId} not found.");
                 }
 
                 user.Goal = goalDto.Goal;
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
-                    _logger.LogWarning("Failed to update goal for user ID {UserId}: {Errors}", userId, string.Join(", ", result.Errors.Select(e => e.Description)));
-                    return new ApiResponse(400, "Failed to update goal.", result.Errors);
+                    return new ApiResponse(400, $"Failed to update goal for user ID {userId}.", result.Errors.Select(e => e.Description));
                 }
 
-                _logger.LogInformation("Goal updated successfully for user ID: {UserId}", userId);
                 return new ApiResponse(200, "Goal updated successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating goal for user ID: {UserId}", userId);
                 return new ApiExceptionResponse(500, "An error occurred while updating the goal", ex.Message);
             }
         }
@@ -485,6 +468,79 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogError(ex, "Error confirming profile for user ID: {UserId}", userId);
                 return new ApiExceptionResponse(500, "An error occurred while confirming the profile", ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse> StopMembershipAsync(StopMembershipDto stopMembershipDto, string currentUserId)
+        {
+            if (stopMembershipDto == null)
+            {
+                return new ApiResponse(400, "Stop membership data cannot be null.");
+            }
+
+            if (string.IsNullOrWhiteSpace(stopMembershipDto.UserCode))
+            {
+                return new ApiResponse(400, "UserCode cannot be null or empty.");
+            }
+
+            if (stopMembershipDto.NumberOfDays <= 0)
+            {
+                return new ApiResponse(400, "Number of days must be greater than zero.");
+            }
+
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return new ApiResponse(401, "Authenticated user ID is required.");
+            }
+
+            try
+            {
+
+                if (!Guid.TryParse(currentUserId, out _))
+                {
+                    return new ApiResponse(401, "Current user ID must be a valid GUID.");
+                }
+
+                var currentUser = await _userManager.FindByIdAsync(currentUserId);
+                if (currentUser == null)
+                {
+                    return new ApiResponse(401, $"Current user with ID {currentUserId} not found.");
+                }
+
+                var membershipRepo = _unitOfWork.Repository<Membership>();
+                var membershipSpec = new BaseSpecification<Membership>(m => m.UserCode == stopMembershipDto.UserCode && !m.IsDeleted);
+                var membership = await membershipRepo.GetEntityWithSpecAsync(membershipSpec);
+                if (membership == null)
+                {
+                    return new ApiResponse(404, $"Membership for UserCode {stopMembershipDto.UserCode} not found.");
+                }
+
+                if (membership.StopDate.HasValue && membership.StopDate.Value > DateTime.UtcNow)
+                {
+                    return new ApiResponse(409, $"Membership for UserCode {stopMembershipDto.UserCode} is already stopped until {membership.StopDate}.");
+                }
+
+                var currentTime = DateTime.UtcNow;
+                membership.EndDate = membership.EndDate.AddDays(stopMembershipDto.NumberOfDays); 
+                membership.StopDate = currentTime.AddDays(stopMembershipDto.NumberOfDays); 
+                membership.IsActive = false; // Deactivate membership
+                membershipRepo.Update(membership);
+
+                var saveResult = await _unitOfWork.Complete();
+                if (saveResult <= 0)
+                {
+                    return new ApiResponse(500, "Failed to persist the stop membership operation.");
+                }
+
+                return new ApiResponse(200, "Membership stopped successfully.");
+            }
+            catch (Exception ex) when (ex is ArgumentException or SecurityException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return new ApiExceptionResponse(500, "An unexpected error occurred during stop membership.", ex.Message);
             }
         }
     }

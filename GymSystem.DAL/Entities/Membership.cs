@@ -13,8 +13,9 @@ namespace GymSystem.DAL.Entities
 
         public string? UserId { get; set; }
         public AppUser User { get; set; }
-
-        // العلاقة مع Class (واحد إلى واحد اختياري)
+        public DateTime? StopDate { get; set; }
+        public bool IsActive { get; set; }
+        public string UserCode { get; set; }
         public int ClassId { get; set; }
         public Class Class { get; set; }
     }

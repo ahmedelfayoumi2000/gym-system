@@ -9,11 +9,6 @@ namespace GymSystem.DAL.Data.Config
     {
         public void Configure(EntityTypeBuilder<Attendance> builder)
         {
-            builder.HasOne(a => a.Class)
-                   .WithMany(c => c.Attendances) 
-                   .HasForeignKey(a => a.ClassId)
-                   .OnDelete(DeleteBehavior.Restrict)
-                   .IsRequired(false);
 
             //the attending user
             builder.HasOne(a => a.User)

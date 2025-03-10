@@ -16,5 +16,11 @@ namespace GymSystem.DAL.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // تاريخ التسجيل
         public int ClassId { get; set; }
         public Class Class { get; set; }
+
+
+        //============================
+        public string? UserCode { get; set; }
+        public int? MembershipId { get; set; }
+        public MonthlyMembership? Membership { get; set; }
     }
 }

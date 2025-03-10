@@ -14,9 +14,7 @@ namespace GymSystem.DAL.Configurations
                    .IsRequired()
                    .HasMaxLength(450);
 
-            builder.Property(m => m.ClassId)
-                   .IsRequired();
-
+         
             builder.Property(m => m.PlanId)
                    .IsRequired();
 
@@ -35,10 +33,6 @@ namespace GymSystem.DAL.Configurations
                    .HasForeignKey(m => m.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(m => m.Class)
-                   .WithMany(c => c.MonthlyMemberships)
-                   .HasForeignKey(m => m.ClassId)
-                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(m => m.Plan)
                    .WithMany()

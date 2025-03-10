@@ -11,7 +11,7 @@ namespace GymSystem.DAL.Entities
     {
         public int ProductId { get; set; } 
         public Product Product { get; set; }
-        public string Name { get; set; }
+        public string ProductName { get; set; }
         public decimal Price { get; set; }
         public int Count { get; set; }
         public bool IsAvailable { get; set; }

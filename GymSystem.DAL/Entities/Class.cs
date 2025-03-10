@@ -31,5 +31,11 @@ namespace GymSystem.DAL.Entities
         public ICollection<DailyAttendance> DailyAttendances { get; set; } = new List<DailyAttendance>();
 
         public ICollection<ClassEquipment> ClassEquipments { get; set; } = new List<ClassEquipment>();
+        //============================================
+        public string MemberName { get; set; }
+        public int? PlanId { get; set; }
+        public Plan? Plan { get; set; }
+
+
     }
 }

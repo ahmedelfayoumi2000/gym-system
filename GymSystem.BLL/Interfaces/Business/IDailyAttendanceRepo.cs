@@ -6,8 +6,8 @@ namespace GymSystem.BLL.Interfaces
 {
     public interface IDailyAttendanceRepo
     {
-        Task<ApiResponse> AddAttendanceAsync(DailyAttendanceDto attendance);
-        Task<IReadOnlyList<DailyAttendanceDto>> GetAttendancesForUserAsync(string userCode);
+        Task<ApiResponse> AddAttendanceAsync(AttendanceDto attendanceDto);
+        Task<IReadOnlyList<AttendanceDto>> GetAttendancesForUserAsync(string userCode);
         Task<ApiResponse> DeleteAttendanceAsync(int id);
 
 

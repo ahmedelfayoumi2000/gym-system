@@ -1,10 +1,12 @@
 ﻿using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security;
 using System.Security.Claims;
 
 namespace GymSystem.API.Controllers
@@ -353,6 +355,47 @@ namespace GymSystem.API.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, "An error occurred while confirming the profile", ex.Message));
+            }
+        }
+
+        [HttpPost("stop-membership")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> StopMembershipAsync([FromBody] StopMembershipDto stopMembershipDto)
+        {
+            try
+            {
+
+                if (stopMembershipDto == null || string.IsNullOrWhiteSpace(stopMembershipDto.UserCode))
+                {
+                    return BadRequest(new ApiResponse(400, "Stop membership data or UserCode cannot be null or empty."));
+                }
+
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    return Unauthorized(new ApiResponse(401, "User authentication required."));
+                }
+
+                var response = await _membershipRepo.StopMembershipAsync(stopMembershipDto, currentUserId);
+              
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new ApiResponse(400, ex.Message));
+            }
+            catch (SecurityException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse(403, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiExceptionResponse(500, "An unexpected error occurred during stop membership.", ex.Message));
             }
         }
 

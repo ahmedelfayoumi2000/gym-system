@@ -12,8 +12,9 @@ namespace GymSystem.DAL.Entities.Identity
         public DateTime? DeletedAt { get; set; }
         public string? ProfileImageName { get; set; } 
         public string? UserCode { get; set; }
-        public string Gender { get; set; }
+        public string? Gender { get; set; }
         public uint? Age { get; set; }
+        public decimal? Salary { get; set; }
         public DateTime StartDate { get; set; }= DateTime.Now;
 
 		private DateTime _endDate;
@@ -25,7 +26,7 @@ namespace GymSystem.DAL.Entities.Identity
 
 		public bool IsStopped { get; set; } = false; 
         public DateTime? StopDate { get; set; }
-        public int? HaveDays { get; set; }
+        //public int? HaveDays { get; set; }
         public string? AddBy { get; set; } 
         public int? RemainingDays
 		{
