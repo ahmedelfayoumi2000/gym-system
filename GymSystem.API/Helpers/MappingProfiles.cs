@@ -106,7 +106,7 @@ namespace GymSystem.API.Helpers
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
             CreateMap<Order, OrderViewDto>();
-            CreateMap<Payment, PaymentDto>();
+            //CreateMap<Payment, PaymentDto>();
 
             CreateMap<Class, ClassViewDto>()
             .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.MemberName))
@@ -117,6 +117,9 @@ namespace GymSystem.API.Helpers
             CreateMap<ClassDto, Class>()
             .ForMember(dest => dest.Plan, opt => opt.Ignore())
             .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime ?? DateTime.Now));
+
+            CreateMap<FinancialTransaction, TransactionDto>()
+                .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(src => src.TransactionType.ToString()));
         }
     }
 }

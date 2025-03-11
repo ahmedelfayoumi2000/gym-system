@@ -8,7 +8,9 @@ namespace GymSystem.BLL.Dtos.Payment
 {
     public class CloseDrawerResponseDto
     {
-        public List<PaymentDto> Payments { get; set; } = new List<PaymentDto>(); 
-        public decimal TotalAmount { get; set; } 
+        public List<TransactionDto> Transactions { get; set; } = new List<TransactionDto>(); 
+        public decimal TotalIncome { get; set; } // إجمالي الدخل 
+        public decimal TotalExpenses { get; set; } // إجمالي المصروفات 
+        public decimal NetAmount { get; set; } //( الصافي (دخل - مصروفات
     }
 }
