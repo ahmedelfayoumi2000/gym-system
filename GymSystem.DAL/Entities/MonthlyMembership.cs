@@ -31,5 +31,9 @@ namespace GymSystem.DAL.Entities
         public string? UserCode { get; set; }
      
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
+        public DateTime? LastStopDate { get; set; }  // آخر تاريخ تم فيه بدء الإيقاف
+
+      
     }
 }

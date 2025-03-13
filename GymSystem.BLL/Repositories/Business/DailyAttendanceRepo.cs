@@ -44,11 +44,6 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<ApiResponse> AddAttendanceAsync(AttendanceDto attendanceDto)
         {
-            if (attendanceDto == null || string.IsNullOrWhiteSpace(attendanceDto.UserCode))
-            {
-                return new ApiResponse(400, "Attendance data or UserCode cannot be null or empty.");
-            }
-
             try
             {
 

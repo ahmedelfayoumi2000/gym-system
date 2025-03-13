@@ -53,11 +53,6 @@ namespace GymSystem.BLL.Repositories
 
         public async Task<ApiResponse> CreateAsync(PlanDto planDto)
         {
-            if (planDto == null)
-            {
-                return new ApiResponse(400, "Plan data cannot be null.");
-            }
-
             try
             {
                 var plan = _mapper.Map<Plan>(planDto);
@@ -84,16 +79,6 @@ namespace GymSystem.BLL.Repositories
 
         public async Task<ApiResponse> UpdateAsync(int id, PlanDto planDto)
         {
-            if (id <= 0)
-            {
-                return new ApiResponse(400, "Plan ID must be a positive integer.");
-            }
-
-            if (planDto == null)
-            {
-                return new ApiResponse(400, "Plan data cannot be null.");
-            }
-
             try
             {
                 var existingPlan = await _unitOfWork.Repository<Plan>().GetByIdAsync(id);
@@ -106,11 +91,6 @@ namespace GymSystem.BLL.Repositories
                 _unitOfWork.Repository<Plan>().Update(existingPlan);
 
                 var result = await _unitOfWork.Complete();
-                if (result <= 0)
-                {
-                    return new ApiResponse(500, "Failed to update the plan in the database.");
-                }
-
                 var updatedDto = _mapper.Map<PlanDto>(existingPlan);
                 return new ApiResponse(200, "Plan updated successfully", updatedDto);
             }
@@ -126,11 +106,6 @@ namespace GymSystem.BLL.Repositories
 
         public async Task<ApiResponse> DeleteAsync(int id)
         {
-            if (id <= 0)
-            {
-                return new ApiResponse(400, "Plan ID must be a positive integer.");
-            }
-
             try
             {
                 var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync(id);
@@ -140,13 +115,7 @@ namespace GymSystem.BLL.Repositories
                 }
 
                 _unitOfWork.Repository<Plan>().Delete(plan);
-
-                var result = await _unitOfWork.Complete();
-                if (result <= 0)
-                {
-                    return new ApiResponse(500, "Failed to delete the plan from the database.");
-                }
-
+                await _unitOfWork.Complete();
                 return new ApiResponse(200, "Plan deleted successfully");
             }
             catch (Exception ex)

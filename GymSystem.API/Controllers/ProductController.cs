@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace GymSystem.API.Controllers
 {
    
-    [Authorize(Roles = "Admin,Receptionist")]
+    //[Authorize(Roles = "Admin,Receptionist")]
     public class ProductController : BaseApiController
     {
         private readonly IProductRepo _productRepo;
@@ -34,7 +34,7 @@ namespace GymSystem.API.Controllers
             if (!ModelState.IsValid || productCreateDto == null)
             {
                 return BadRequest(CreateValidationError("Invalid product data"));
-            }
+            }   
 
             try
             {

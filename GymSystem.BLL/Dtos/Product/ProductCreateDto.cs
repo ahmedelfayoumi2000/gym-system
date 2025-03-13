@@ -8,10 +8,8 @@ namespace GymSystem.BLL.Dtos.Product
 {
     public class ProductCreateDto
     {
-        //public int EquipmentId { get; set; } 
         public string Name { get; set; }
         public decimal Price { get; set; }
         public int Count { get; set; }
-        //public bool IsAvailable { get; set; }
     }
 }

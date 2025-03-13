@@ -4,6 +4,7 @@ using GymSystem.DAL.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymSystem.DAL.Data.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    partial class AppIdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250312202438_UpdateLatestTables")]
+    partial class UpdateLatestTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,7 +80,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Attendances", (string)null);
+                    b.ToTable("Attendances");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.BMIRecord", b =>
@@ -167,7 +170,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("Classes", (string)null);
+                    b.ToTable("Classes");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.ClassEquipment", b =>
@@ -182,7 +185,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("EquipmentId");
 
-                    b.ToTable("ClassEquipments", (string)null);
+                    b.ToTable("ClassEquipments");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.DailyAttendance", b =>
@@ -215,7 +218,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("dailyAttendances", (string)null);
+                    b.ToTable("dailyAttendances");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Equipment", b =>
@@ -249,7 +252,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Equipments", (string)null);
+                    b.ToTable("Equipments");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.EquipmentMaintenance", b =>
@@ -277,7 +280,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("EquipmentMaintenances", (string)null);
+                    b.ToTable("EquipmentMaintenances");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Exercise", b =>
@@ -326,7 +329,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("WorkoutPlanId");
 
-                    b.ToTable("Exercises", (string)null);
+                    b.ToTable("Exercises");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.ExerciseCategory", b =>
@@ -349,7 +352,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExerciseCategories", (string)null);
+                    b.ToTable("ExerciseCategories");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Feedback", b =>
@@ -378,7 +381,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Feedbacks", (string)null);
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.FinancialTransaction", b =>
@@ -414,7 +417,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("financialTransactions", (string)null);
+                    b.ToTable("financialTransactions");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Identity.AppUser", b =>
@@ -577,7 +580,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("NutritionPlanId");
 
-                    b.ToTable("Meals", (string)null);
+                    b.ToTable("Meals");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.MealsCategory", b =>
@@ -600,7 +603,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MealsCategories", (string)null);
+                    b.ToTable("MealsCategories");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Membership", b =>
@@ -651,7 +654,7 @@ namespace GymSystem.DAL.Data.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("Memberships", (string)null);
+                    b.ToTable("Memberships");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.MonthlyMembership", b =>
@@ -719,7 +722,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("monthlyMemberships", (string)null);
+                    b.ToTable("monthlyMemberships");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Notification", b =>
@@ -750,7 +753,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.NutritionPlan", b =>
@@ -774,7 +777,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NutritionPlans", (string)null);
+                    b.ToTable("NutritionPlans");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Order", b =>
@@ -819,7 +822,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Plan", b =>
@@ -842,7 +845,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Plans", (string)null);
+                    b.ToTable("Plans");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Product", b =>
@@ -879,7 +882,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("EquipmentId");
 
-                    b.ToTable("products", (string)null);
+                    b.ToTable("products");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Recipe", b =>
@@ -922,7 +925,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("MealsCategoryId");
 
-                    b.ToTable("recipes", (string)null);
+                    b.ToTable("recipes");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Repair", b =>
@@ -946,7 +949,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("EquipmentId");
 
-                    b.ToTable("repairs", (string)null);
+                    b.ToTable("repairs");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.WorkoutPlan", b =>
@@ -978,7 +981,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("WorkoutPlans", (string)null);
+                    b.ToTable("WorkoutPlans");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1297,7 +1300,7 @@ namespace GymSystem.DAL.Data.Migrations
                         .HasForeignKey("NutritionPlanId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.OwnsOne("GymSystem.DAL.Entities.Identity.AppUser.Address#GymSystem.DAL.Entities.Identity.Address", "Address", b1 =>
+                    b.OwnsOne("GymSystem.DAL.Entities.Identity.Address", "Address", b1 =>
                         {
                             b1.Property<string>("AppUserId")
                                 .HasColumnType("nvarchar(450)");
@@ -1327,13 +1330,13 @@ namespace GymSystem.DAL.Data.Migrations
 
                             b1.HasKey("AppUserId");
 
-                            b1.ToTable("AspNetUsers", (string)null);
+                            b1.ToTable("AspNetUsers");
 
                             b1.WithOwner()
                                 .HasForeignKey("AppUserId");
                         });
 
-                    b.OwnsMany("GymSystem.DAL.Entities.Identity.AppUser.RefreshTokens#GymSystem.DAL.Entities.Identity.RefreshToken", "RefreshTokens", b1 =>
+                    b.OwnsMany("GymSystem.DAL.Entities.Identity.RefreshToken", "RefreshTokens", b1 =>
                         {
                             b1.Property<string>("AppUserId")
                                 .HasColumnType("nvarchar(450)");
@@ -1359,7 +1362,7 @@ namespace GymSystem.DAL.Data.Migrations
 
                             b1.HasKey("AppUserId", "Id");
 
-                            b1.ToTable("RefreshToken", (string)null);
+                            b1.ToTable("RefreshToken");
 
                             b1.WithOwner()
                                 .HasForeignKey("AppUserId");

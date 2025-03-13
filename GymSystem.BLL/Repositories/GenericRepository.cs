@@ -47,4 +47,20 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     {
         return await ApplySpecifications(spec).FirstOrDefaultAsync();
     }
+
+    public async Task<List<T>> GetRepairByEquipmentIdAsync(int equipmentId)
+    {
+        if (typeof(T) == typeof(Repair))
+        {
+            return await _context.Set<Repair>()
+                                 .Where(r => r.EquipmentId == equipmentId)
+                                 .ToListAsync() as List<T>;
+        }
+        throw new NotSupportedException("This method is only supported for Repair entity.");
+    }
+
+    public async Task<T> GetByEmailAsync<T>(string email) where T : class
+    {
+        return await _context.Set<T>().FirstOrDefaultAsync(u => EF.Property<string>(u, "UserEmail") == email);
+    }
 }

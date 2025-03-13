@@ -14,3 +14,4 @@ namespace GymSystem.DAL.Entities.Enums.Business
         Other         // عمليات أخرى
     }
 }
+    

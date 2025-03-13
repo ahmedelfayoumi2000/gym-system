@@ -451,12 +451,6 @@ namespace GymSystem.BLL.Services.Auth
                     return (false, "Email is already confirmed.");
                 }
 
-                if (token.StartsWith("eyJ"))
-                {
-                    _logger.LogWarning("Invalid token format for user ID {UserId}. JWT token provided instead of email confirmation token.", userId);
-                    return (false, "Invalid token: A JWT token was provided instead of an email confirmation token. Please use the token from the confirmation email " +
-                        "sent during registration or resend it using 'Resend Confirmation Email'.");
-                }
 
                 var confirmed = await _userManager.ConfirmEmailAsync(user, token);
                 if (!confirmed.Succeeded)

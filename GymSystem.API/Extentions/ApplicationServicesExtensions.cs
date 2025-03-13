@@ -63,6 +63,8 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IExerciseRepo, ExerciseRepo>();
             //services.AddScoped<IPaymentService, PaymentRepository>();
             services.AddScoped<IFinancialTransactionService, FinancialTransactionRepository>();
+            services.AddScoped<IUserService, UserService>();
+           services.AddScoped<IUserCodeGenerator, UserCodeGenerator>();
             return services;
         }
 

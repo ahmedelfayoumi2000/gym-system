@@ -17,7 +17,8 @@ namespace GymSystem.BLL.Interfaces
         Task<IReadOnlyList<T>> GetAllWithSpecAsync(ISpecification<T> spec);
         Task<T> GetEntityWithSpecAsync(ISpecification<T> spec);
         Task<int> GetCountAsync(ISpecification<T> spec);
-
+        Task<List<T>> GetRepairByEquipmentIdAsync(int equipmentId);
+        Task<T> GetByEmailAsync<T>(string email) where T : class;
         Task Add(T entity);
         void Update(T entity);
         void Delete(T entity);

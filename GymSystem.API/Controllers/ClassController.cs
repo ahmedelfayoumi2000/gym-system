@@ -27,11 +27,11 @@ namespace GymSystem.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllClasses([FromQuery] SpecPrams specParams = null)
+        public async Task<IActionResult> GetAllClasses()
         {
             try
             {
-                var classes = await _classRepo.GetClasses(specParams);
+                var classes = await _classRepo.GetClasses();
                 var classList = classes.ToList();
                 return Ok(new ApiResponse(200, "Classes retrieved successfully", classList));
             }

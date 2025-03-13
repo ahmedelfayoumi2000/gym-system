@@ -9,6 +9,7 @@ using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using GymSystem.BLL.Specifications.EquipmentSpec;
 using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace GymSystem.BLL.Repositories.Business
 {
@@ -39,8 +41,6 @@ namespace GymSystem.BLL.Repositories.Business
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // دالة الإضافة: بنضيف معدة جديدة
-        // : لما الفرونت يبعتلي بيانات معدة جديدة، بشوف لو موجودة قبل كدا، لو لأ، بضيفها وأرجع الـ DTO بتاعها
         public async Task<ApiResponse> CreateAsync(EquipmentCreateDto equipmentCreateDto)
         {
             if (equipmentCreateDto == null)
@@ -76,8 +76,6 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-        // دالة التعديل: بنعدل معدة موجودة
-      
         public async Task<ApiResponse> UpdateAsync(int id, EquipmentCreateDto equipmentCreateDto)
         {
             if (id <= 0)
@@ -93,7 +91,7 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
 
-                var spec = new BaseSpecification<Equipment>(e => e.Id == id && !e.IsDeleted);
+                var spec = new EquipmentWithRelationsSpecification(e => e.Id == id);
                 var existingEquipment = await _unitOfWork.Repository<Equipment>().GetEntityWithSpecAsync(spec);
                 if (existingEquipment == null)
                 {
@@ -128,7 +126,7 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
 
-                var spec = new BaseSpecification<Equipment>(e => e.Id == id && !e.IsDeleted);
+                var spec = new EquipmentWithRelationsSpecification(e => e.Id == id);
                 var equipment = await _unitOfWork.Repository<Equipment>().GetEntityWithSpecAsync(spec);
                 if (equipment == null)
                 {
@@ -151,9 +149,6 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiExceptionResponse(500, "An error occurred while deleting the equipment", ex.Message);
             }
         }
-
-        // دالة جلب معدة معينة: برجع تفاصيل معدة بناءً على الـ ID
-        //  الفرونت بيبعتلي رقم المعدة، بجيب كل حاجة عنها وأرجعهاله
         public async Task<EquipmentViewDto> GetByIdAsync(int id)
         {
             try
@@ -183,23 +178,14 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("بيجيب كل المعدات مع الفلاتر: {@SpecParams}", specParams);
-
-                var spec = specParams != null
+                ISpecification<Equipment> spec = specParams != null
                     ? new EquipmentWithFiltersSpecification(specParams)
-                    : new BaseSpecification<Equipment>(e => !e.IsDeleted);
+                    : new EquipmentWithRelationsSpecification();
 
                 var equipments = await _unitOfWork.Repository<Equipment>().GetAllWithSpecAsync(spec);
-                var equipmentDtos = _mapper.Map<IEnumerable<EquipmentViewDto>>(equipments);
+                var equipmentDtos = _mapper.Map<IReadOnlyList<EquipmentViewDto>>(equipments);
 
-                foreach (var dto in equipmentDtos)
-                {
-                    var entity = equipments.First(e => e.Id == dto.Id);
-                    dto.MaintenanceCount = entity.MaintainedByUsers?.Count ?? 0;
-                    dto.ClassUsageCount = entity.UsedInClasses?.Count ?? 0;
-                }
-
-                _logger.LogInformation("جبت {Count} معدة بنجاح.", equipmentDtos.Count());
+               
                 return equipmentDtos;
             }
             catch (Exception ex)
@@ -208,67 +194,89 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-        // دالة الإصلاح: بتسجل عملية صيانة لمعدة وبتحدث تاريخ الصيانة
-        //  الفرونت بيبعت رقم المعدة وسعر ووصف الإصلاح، بضيف السجل ده وبحدث المعدة
-        public async Task<ApiResponse> RepairAsync(EquipmentRepairDto repairDto, string? currentUserId)
+        #region Repair Operations
+
+        /// <summary>
+        /// Records a repair for an equipment and logs a financial transaction as a Withdrawal.
+        /// </summary>
+        public async Task<ApiResponse> RepairAsync(EquipmentRepairDto repairDto, string currentUserId)
         {
-            if (repairDto == null || repairDto.EquipmentId <= 0)
+            using (var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                return new ApiResponse(400, "Repair data or Equipment ID is invalid.");
-            }
-
-            try
-            {
-
-                var spec = new BaseSpecification<Equipment>(e => e.Id == repairDto.EquipmentId && !e.IsDeleted);
-                var equipment = await _unitOfWork.Repository<Equipment>().GetEntityWithSpecAsync(spec);
-                if (equipment == null)
+                try
                 {
-                    _logger.LogWarning("المعدة رقم {EquipmentId} مش موجودة.", repairDto.EquipmentId);
-                    return new ApiResponse(404, $"Equipment with ID {repairDto.EquipmentId} not found.");
+                    var spec = new BaseSpecification<Equipment>(e => e.Id == repairDto.EquipmentId && !e.IsDeleted);
+                    var equipment = await _unitOfWork.Repository<Equipment>().GetEntityWithSpecAsync(spec);
+                    if (equipment == null)
+                    {
+                        return new ApiResponse(404, $"Equipment with ID {repairDto.EquipmentId} not found.");
+                    }
+
+                    var user = await _userManager.FindByIdAsync(currentUserId);
+                    if (user == null)
+                    {
+                        return new ApiResponse(404, "Current user not found.");
+                    }
+
+                    var repair = new EquipmentMaintenance
+                    {
+                        EquipmentId = repairDto.EquipmentId,
+                        UserId = currentUserId,
+                        Price = repairDto.Price,
+                        Description = repairDto.Description,
+                        MaintenanceDate = DateTime.UtcNow
+                    };
+                    await _unitOfWork.Repository<EquipmentMaintenance>().Add(repair);
+
+                    await RecordFinancialTransaction(repair, TransactionType.Withdrawal, currentUserId);
+
+                    equipment.LastMaintenanceDate = DateTime.UtcNow;
+                    equipment.IsAvailable = true;
+                    _unitOfWork.Repository<Equipment>().Update(equipment);
+
+                    var result = await _unitOfWork.Complete();
+                    if (result <= 0)
+                    {
+                        return new ApiResponse(500, "Failed to save the repair to the database.");
+                    }
+
+                    transactionScope.Complete();
+                    var updatedDto = _mapper.Map<EquipmentViewDto>(equipment);
+                    updatedDto.MaintenanceCount = (equipment.MaintainedByUsers?.Count ?? 0) + 1;
+                    updatedDto.ClassUsageCount = equipment.UsedInClasses?.Count ?? 0;
+
+                    return new ApiResponse(200, "Equipment repaired successfully", updatedDto);
                 }
-
-                var user = await _userManager.FindByIdAsync(currentUserId);
-                if (user == null)
+                catch (Exception ex)
                 {
-                    _logger.LogWarning("المستخدم برقم {UserId} مش موجود.", currentUserId);
-                    return new ApiResponse(400, "Current user not found.");
+                    return new ApiExceptionResponse(500, "An error occurred while repairing the equipment.", ex.Message);
                 }
-
-                var repair = new EquipmentMaintenance
-                {
-                    EquipmentId = repairDto.EquipmentId,
-                    UserId = currentUserId,
-                    Price = repairDto.Price,
-                    Description = repairDto.Description,
-                    MaintenanceDate = DateTime.UtcNow
-                };
-                await _unitOfWork.Repository<EquipmentMaintenance>().Add(repair);
-
-                equipment.LastMaintenanceDate = DateTime.UtcNow;
-                equipment.IsAvailable = true; // لما تتصلح، ترجع متاحة
-                _unitOfWork.Repository<Equipment>().Update(equipment);
-
-                var result = await _unitOfWork.Complete();
-                if (result <= 0)
-                {
-                    return new ApiResponse(500, "Failed to save the repair to the database.");
-                }
-
-                var updatedDto = _mapper.Map<EquipmentViewDto>(equipment);
-                updatedDto.MaintenanceCount = equipment.MaintainedByUsers?.Count + 1 ?? 1; 
-                updatedDto.ClassUsageCount = equipment.UsedInClasses?.Count ?? 0;
-
-                return new ApiResponse(200, "Equipment repaired successfully", updatedDto);
-            }
-            catch (Exception ex)
-            {
-                return new ApiExceptionResponse(500, "An error occurred while repairing the equipment", ex.Message);
             }
         }
 
-      
+        #endregion
 
+        #region Private Helper Methods
+        private async Task RecordFinancialTransaction(EquipmentMaintenance repair, TransactionType transactionType, string userId)
+        {
+            var transaction = new FinancialTransaction
+            {
+                TransactionType = transactionType,
+                Amount = repair.Price,
+                TransactionDate = DateTime.UtcNow,
+                Description = $"Repair cost for Equipment ID: {repair.EquipmentId}",
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            await _unitOfWork.Repository<FinancialTransaction>().Add(transaction);
+            _logger.LogInformation("Financial transaction recorded for repair of Equipment ID: {EquipmentId}", repair.EquipmentId);
+        }
+
+        #endregion
     }
+
 }
+
 

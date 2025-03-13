@@ -10,7 +10,7 @@ namespace GymSystem.DAL.Entities
     {
 
         public string? Description { get; set; }
-        public decimal? Cost { get; set; }
+        public decimal Cost { get; set; }
 
         //===========
         public int? EquipmentId { get; set; }

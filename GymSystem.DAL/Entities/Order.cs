@@ -13,6 +13,7 @@ namespace GymSystem.DAL.Entities
         public Product Product { get; set; }
         public string ProductName { get; set; }
         public decimal Price { get; set; }
+        public decimal Total { get; set; }
         public int Count { get; set; }
         public bool IsAvailable { get; set; }
         public bool IsDeleted { get; set; }

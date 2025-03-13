@@ -11,7 +11,6 @@ namespace GymSystem.DAL.Entities
 {
     public class WorkoutPlan : BaseEntity
     {
-        //public int WorkoutPlanId { get; set; }
         public string? ImageUrl { get; set; }
         [NotMapped]
         public IFormFile Image { get; set; }
