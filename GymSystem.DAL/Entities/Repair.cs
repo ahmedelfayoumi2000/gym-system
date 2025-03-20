@@ -8,13 +8,10 @@ namespace GymSystem.DAL.Entities
 {
     public class Repair : BaseEntity
     {
-
-        public string? Description { get; set; }
+        public string Description { get; set; } = string.Empty; 
         public decimal Cost { get; set; }
 
-        //===========
-        public int? EquipmentId { get; set; }
-        public Equipment? Equipment { get; set; }
-
+        public int EquipmentId { get; set; } 
+        public Equipment Equipment { get; set; }
     }
 }

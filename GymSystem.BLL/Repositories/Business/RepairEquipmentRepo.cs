@@ -3,7 +3,7 @@ using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
-using GymSystem.BLL.Specifications.EquipmentSpec;
+using GymSystem.BLL.Specifications;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Enums.Business;
 using Microsoft.Extensions.Logging;
@@ -34,11 +34,16 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<IReadOnlyList<RepairDto>> GetAllAsync()
         {
-            _logger.LogInformation("Retrieving all repair records.");
-
             try
             {
-                var repairs = await _unitOfWork.Repository<Repair>().GetAllAsync();
+                var spec = new BaseSpecification<Repair>(r => true)
+                {
+                    Includes = new List<System.Linq.Expressions.Expression<Func<Repair, object>>>
+                    {
+                        r => r.Equipment
+                    }
+                };
+                var repairs = await _unitOfWork.Repository<Repair>().GetAllWithSpecAsync(spec);
                 var repairDtos = _mapper.Map<IReadOnlyList<RepairDto>>(repairs);
                 _logger.LogInformation("Retrieved {Count} repair records.", repairDtos.Count);
                 return repairDtos;
@@ -52,19 +57,19 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<List<RepairDto>> GetRepairsByEquipmentIdAsync(int equipmentId)
         {
-
-
             try
             {
-                var repairs = await _unitOfWork.Repository<Repair>().GetRepairByEquipmentIdAsync(equipmentId);
+                var spec = new BaseSpecification<Repair>(r => r.EquipmentId == equipmentId);
+                var repairs = await _unitOfWork.Repository<Repair>().GetAllWithSpecAsync(spec);
                 var repairDtos = repairs?.Any() == true
                     ? _mapper.Map<List<RepairDto>>(repairs)
                     : new List<RepairDto>();
-
+                _logger.LogInformation("Retrieved {Count} repairs for Equipment ID {EquipmentId}.", repairDtos.Count, equipmentId);
                 return repairDtos;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to retrieve repairs for Equipment with ID {EquipmentId}.", equipmentId);
                 throw new ApplicationException($"Failed to retrieve repairs for Equipment with ID {equipmentId}.", ex);
             }
         }
@@ -73,10 +78,21 @@ namespace GymSystem.BLL.Repositories.Business
 
         #region CRUD Operations
 
-        public async Task<ApiResponse> CreateAsync(RepairDto repairDto)
+        public async Task<ApiResponse> CreateAsync(RepairDto repairDto, string currentUserId)
         {
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return new ApiResponse(401, "User authentication required.");
+            }
 
+            var equipmentSpec = new BaseSpecification<Equipment>(e => e.Id == repairDto.EquipmentId);
+            var equipment = await _unitOfWork.Repository<Equipment>().GetEntityWithSpecAsync(equipmentSpec);
+            if (equipment == null)
+            {
+                return new ApiResponse(404, $"Equipment with ID {repairDto.EquipmentId} not found.");
+            }
 
+            // Ensure DbContext uses a single connection for the transaction
             using (var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
@@ -84,20 +100,23 @@ namespace GymSystem.BLL.Repositories.Business
                     var repair = _mapper.Map<Repair>(repairDto);
                     await _unitOfWork.Repository<Repair>().Add(repair);
 
-                    await RecordFinancialTransaction(repair, TransactionType.Withdrawal);
+                    await RecordFinancialTransaction(repair, TransactionType.Withdrawal, currentUserId);
 
                     var result = await _unitOfWork.Complete();
                     if (result <= 0)
                     {
+                        _logger.LogError("Failed to save the repair record for Equipment ID: {EquipmentId}.", repairDto.EquipmentId);
                         return new ApiResponse(500, "Failed to save the repair record to the database.");
                     }
 
                     transactionScope.Complete();
                     var createdDto = _mapper.Map<RepairDto>(repair);
+                    _logger.LogInformation("Repair record created successfully for Equipment ID: {EquipmentId}.", repairDto.EquipmentId);
                     return new ApiResponse(201, "Repair record created successfully", createdDto);
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error creating repair record for Equipment ID: {EquipmentId}.", repairDto.EquipmentId);
                     return new ApiExceptionResponse(500, "An error occurred while creating the repair record.", ex.Message);
                 }
             }
@@ -107,14 +126,15 @@ namespace GymSystem.BLL.Repositories.Business
 
         #region Private Helper Methods
 
-        private async Task RecordFinancialTransaction(Repair repair, TransactionType transactionType)
+        private async Task RecordFinancialTransaction(Repair repair, TransactionType transactionType, string userId)
         {
             var transaction = new FinancialTransaction
             {
-                TransactionType = transactionType, 
-                Amount = repair.Cost, 
+                TransactionType = transactionType,
+                Amount = -repair.Cost, // Negative for Withdrawal
                 TransactionDate = DateTime.UtcNow,
                 Description = $"Repair cost for Equipment ID: {repair.EquipmentId}",
+                CreatedByUserId = userId,
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };

@@ -4,6 +4,7 @@ using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Dtos.Attendance;
 using GymSystem.BLL.Dtos.Class;
 using GymSystem.BLL.Dtos.Equipment;
+using GymSystem.BLL.Dtos.GymSchedule;
 using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.NutritionPlan;
 using GymSystem.BLL.Dtos.Order;
@@ -81,11 +82,11 @@ namespace GymSystem.API.Helpers
 
             CreateMap<MonthlyMembership, MonthlyMembershipViewDto>()
              .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName)) 
+             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName))
              .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email))
-             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.User.PhoneNumber)) 
-             .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan)) 
-                                                                               
+             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.User.PhoneNumber))
+             .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan))
+
              .ForMember(dest => dest.UserCode, opt => opt.MapFrom(src => src.User.UserCode));
 
 
@@ -96,7 +97,7 @@ namespace GymSystem.API.Helpers
             CreateMap<PlanDto, Plan>().ReverseMap();
 
             CreateMap<ProductCreateDto, Product>()
-                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore()); 
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
 
             CreateMap<Product, ProductViewDto>()
                 .ForMember(dest => dest.IsAvailable, opt => opt.MapFrom(src => src.IsActive));
@@ -109,17 +110,22 @@ namespace GymSystem.API.Helpers
             //CreateMap<Payment, PaymentDto>();
 
             CreateMap<Class, ClassViewDto>()
-            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.MemberName))
-            .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
-            .ForMember(dest => dest.TrainerId, opt => opt.MapFrom(src => src.TrainerId))
-            .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan));
+                  .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.MemberName))
+                  .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                  .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan))
+                  .ForMember(dest => dest.TrainerId, opt => opt.MapFrom(src => src.TrainerId));
 
             CreateMap<ClassDto, Class>()
-            .ForMember(dest => dest.Plan, opt => opt.Ignore())
-            .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime ?? DateTime.Now));
+                .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.MemberName))
+                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime ?? DateTime.Now))
+                .ForMember(dest => dest.PlanId, opt => opt.MapFrom(src => src.PlanId))
+                .ForMember(dest => dest.TrainerId, opt => opt.MapFrom(src => src.TrainerId));
 
             CreateMap<FinancialTransaction, TransactionDto>()
                 .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(src => src.TransactionType.ToString()));
+
+            CreateMap<GymScheduleDto, GymSchedule>();
+            CreateMap<GymSchedule, GymScheduleViewDto>();
         }
     }
 }

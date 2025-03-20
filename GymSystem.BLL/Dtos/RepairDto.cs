@@ -9,9 +9,15 @@ namespace GymSystem.BLL.Dtos
 {
     public class RepairDto
     {
-        public int? EquipmentId { get; set; }
-        public string? Description { get; set; }
-        public decimal? Cost { get; set; }
+        [Required(ErrorMessage = "Equipment ID is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Equipment ID must be a positive integer")]
+        public int EquipmentId { get; set; }
 
+        [Required(ErrorMessage = "Description is required")]
+        public string Description { get; set; }
+
+        [Required(ErrorMessage = "Cost is required")]
+        [Range(0, double.MaxValue, ErrorMessage = "Cost must be a non-negative value")]
+        public decimal Cost { get; set; }
     }
 }

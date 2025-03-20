@@ -13,7 +13,7 @@ namespace GymSystem.BLL.Specifications
         {
             if (!string.IsNullOrEmpty(specParams.Search))
             {
-                Criteria = c => c.ClassName.ToLower().Contains(specParams.Search.ToLower()) && !c.IsDeleted;
+                Criteria = c => c.MemberName.ToLower().Contains(specParams.Search.ToLower()) && !c.IsDeleted;
             }
             else
             {
@@ -25,10 +25,10 @@ namespace GymSystem.BLL.Specifications
                 switch (specParams.Sort.ToLower())
                 {
                     case "name":
-                        AddOrderBy(c => c.ClassName);
+                        AddOrderBy(c => c.MemberName);
                         break;
                     case "namedesc":
-                        AddOrderByDescending(c => c.ClassName);
+                        AddOrderByDescending(c => c.MemberName);
                         break;
                     case "starttime":
                         AddOrderBy(c => c.StartTime);

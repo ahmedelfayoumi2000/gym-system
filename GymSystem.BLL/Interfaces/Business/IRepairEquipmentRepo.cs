@@ -15,6 +15,6 @@ namespace GymSystem.BLL.Interfaces.Business
 
         Task<List<RepairDto>> GetRepairsByEquipmentIdAsync(int id);
 
-        Task<ApiResponse> CreateAsync(RepairDto RepairDto);
+        Task<ApiResponse> CreateAsync(RepairDto RepairDto, string currentUserId);
     }
 }

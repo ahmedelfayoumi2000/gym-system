@@ -11,16 +11,16 @@ public class ClassDefaultSpecification : BaseSpecification<Class>
     public ClassDefaultSpecification()
     {
         AddIncludes(c => c.Trainer);
-        AddIncludes(c => c.MonthlyMemberships);
-        AddIncludes(c => c.DailyAttendances);
+        //AddIncludes(c => c.MonthlyMemberships);
+        //AddIncludes(c => c.DailyAttendances);
         AddIncludes(c => c.ClassEquipments);
     }
 
     public ClassDefaultSpecification(Expression<Func<Class, bool>> criteria) : base(criteria)
     {
         AddIncludes(c => c.Trainer);
-        AddIncludes(c => c.MonthlyMemberships);
-        AddIncludes(c => c.DailyAttendances);
+        //AddIncludes(c => c.MonthlyMemberships);
+        //AddIncludes(c => c.DailyAttendances);
         AddIncludes(c => c.ClassEquipments);
     }
 }

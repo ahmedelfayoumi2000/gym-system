@@ -16,15 +16,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AutoMapper" Version="13.0.1" />
-		<PackageReference Include="MailKit" Version="4.10.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.0" />
-		<PackageReference Include="MimeKit" Version="4.10.0" />
+		<PackageReference Include="AutoMapper" Version="14.0.0" />
+		<PackageReference Include="MailKit" Version="4.11.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" />
+		<PackageReference Include="MimeKit" Version="4.11.0" />
 		<PackageReference Include="Otp.NET" Version="1.4.0" />
-		<PackageReference Include="SkiaSharp" Version="2.88.6" />
-		<PackageReference Include="StackExchange.Redis" Version="2.8.24" />
-		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-		<PackageReference Include="ZXing.Net" Version="0.16.9" />
+		<PackageReference Include="SkiaSharp" Version="3.116.1" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.31" />
+		<PackageReference Include="System.Drawing.Common" Version="9.0.3" />
+		<PackageReference Include="ZXing.Net" Version="0.16.10" />
 	</ItemGroup>
 
 </Project>

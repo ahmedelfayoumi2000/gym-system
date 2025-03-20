@@ -16,7 +16,7 @@ namespace GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci
             if (!string.IsNullOrEmpty(specParams.Search))
             {
                 Criteria = m => (m.User.DisplayName.ToLower().Contains(specParams.Search.ToLower()) ||
-                    m.Class.ClassName.ToLower().Contains(specParams.Search.ToLower())) && !m.IsDeleted;
+                    m.Class.MemberName.ToLower().Contains(specParams.Search.ToLower())) && !m.IsDeleted;
             }
             else
             {

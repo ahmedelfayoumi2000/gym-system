@@ -53,5 +53,6 @@ namespace GymSystem.DAL.Identity
         public DbSet<Recipe> recipes { get; set; }
         public DbSet<Repair> repairs { get; set; }
         public DbSet<FinancialTransaction> financialTransactions { get; set; }
+        public DbSet<GymSchedule> gymSchedules { get; set; }
     }
 }

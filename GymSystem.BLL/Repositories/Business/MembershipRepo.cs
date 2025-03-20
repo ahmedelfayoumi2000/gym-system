@@ -279,6 +279,8 @@ namespace GymSystem.BLL.Repositories.Business
 
         #endregion
 
+
+
         #region Private Helper Methods
 
         private void GuardAgainstInvalidId(int id, string entityName)
@@ -441,17 +443,4 @@ namespace GymSystem.BLL.Repositories.Business
         #endregion
     }
 
-    //// Helper class for input validation
-    //internal static class Guard
-    //{
-    //    public static void AgainstInvalidId(int id, string entityName)
-    //    {
-    //        if (id <= 0) throw new ArgumentException($"{entityName} must be a positive integer.", entityName);
-    //    }
-
-    //    public static void AgainstNullInput(object input, string inputName)
-    //    {
-    //        if (input == null) throw new ArgumentNullException(inputName, $"{inputName} cannot be null.");
-    //    }
-    //}
 }

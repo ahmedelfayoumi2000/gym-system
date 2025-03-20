@@ -29,10 +29,6 @@ namespace GymSystem.DAL.Configurations
                    .HasForeignKey(a => a.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(a => a.Class)
-                   .WithMany(c => c.DailyAttendances)
-                   .HasForeignKey(a => a.ClassId)
-                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

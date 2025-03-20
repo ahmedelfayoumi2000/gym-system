@@ -1,24 +1,23 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
-using GymSystem.BLL.Repositories;
-using GymSystem.BLL.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-
-
     [Authorize(Roles = "Admin,Receptionist")]
+    
     public class RepairEquipmentController : BaseApiController
     {
         private readonly IRepairEquipmentRepo _repairEquipmentRepo;
 
         public RepairEquipmentController(IRepairEquipmentRepo repairEquipmentRepo)
         {
-            _repairEquipmentRepo = repairEquipmentRepo;
+            _repairEquipmentRepo = repairEquipmentRepo ?? throw new ArgumentNullException(nameof(repairEquipmentRepo));
         }
 
         [HttpGet]
@@ -29,23 +28,22 @@ namespace GymSystem.API.Controllers
         {
             try
             {
-                var Repairs = await _repairEquipmentRepo.GetAllAsync();
-                return Ok(new ApiResponse(200, "Repairs retrieved successfully", Repairs));
+                var repairs = await _repairEquipmentRepo.GetAllAsync();
+                return Ok(new ApiResponse(200, "Repairs retrieved successfully", repairs));
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "An error occurred while retrieving Repairs", ex.Message));
+                    new ApiExceptionResponse(500, "An error occurred while retrieving repairs.", ex.Message));
             }
         }
-
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllRepairforEquipmentId(int id)
+        public async Task<IActionResult> GetAllRepairsForEquipmentId(int id)
         {
             if (!IsValidId(id))
             {
@@ -54,45 +52,51 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                var Repair = await _repairEquipmentRepo.GetRepairsByEquipmentIdAsync(id);
-                if (Repair == null)
+                var repairs = await _repairEquipmentRepo.GetRepairsByEquipmentIdAsync(id);
+                if (repairs == null || !repairs.Any())
                 {
-                    return NotFound(new ApiResponse(404, $"Equipment with ID {id} not found"));
+                    return NotFound(new ApiResponse(404, $"No repairs found for Equipment with ID {id}."));
                 }
 
-                return Ok(new ApiResponse(200, "Repair Details for Equipment retrieved successfully", Repair));
+                return Ok(new ApiResponse(200, "Repair details for Equipment retrieved successfully", repairs));
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, $"An error occurred while retrieving Repairs for equipment with ID {id}", ex.Message));
+                    new ApiExceptionResponse(500, $"An error occurred while retrieving repairs for Equipment with ID {id}.", ex.Message));
             }
         }
-
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddRepair([FromBody] RepairDto RepairDto)
+        public async Task<IActionResult> AddRepair([FromBody] RepairDto repairDto)
         {
-            if (!IsValidModel(RepairDto))
+            if (!IsValidModel(repairDto))
             {
-                return BadRequest(CreateValidationError("Invalid Repar data"));
+                return BadRequest(CreateValidationError("Invalid repair data."));
             }
 
             try
             {
-                var response = await _repairEquipmentRepo.CreateAsync(RepairDto);
+                var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(currentUserId))
+                {
+                    return Unauthorized(new ApiResponse(401, "User not authenticated. Please provide a valid token."));
+                }
+
+                var response = await _repairEquipmentRepo.CreateAsync(repairDto, currentUserId);
                 return HandleApiResponse(response, StatusCodes.Status201Created);
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "An error occurred while Adding a Repair for equipment", ex.Message));
+                    new ApiExceptionResponse(500, "An error occurred while adding a repair for equipment.", ex.Message));
             }
         }
-
 
         #region Private Helper Methods
 
@@ -116,8 +120,9 @@ namespace GymSystem.API.Controllers
             {
                 200 => Ok(response),
                 201 => StatusCode(StatusCodes.Status201Created, response),
-                404 => NotFound(response),
                 400 => BadRequest(response),
+                401 => Unauthorized(response),
+                404 => NotFound(response),
                 500 => StatusCode(StatusCodes.Status500InternalServerError, response),
                 _ => StatusCode(response.StatusCode ?? 500, response)
             };
