@@ -7,8 +7,10 @@ using GymSystem.BLL.Dtos.Equipment;
 using GymSystem.BLL.Dtos.GymSchedule;
 using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.NutritionPlan;
+using GymSystem.BLL.Dtos.Offer;
 using GymSystem.BLL.Dtos.Order;
 using GymSystem.BLL.Dtos.Payment;
+using GymSystem.BLL.Dtos.plan;
 using GymSystem.BLL.Dtos.Product;
 using GymSystem.BLL.Dtos.Trainer;
 using GymSystem.BLL.Dtos.User;
@@ -85,7 +87,6 @@ namespace GymSystem.API.Helpers
              .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName))
              .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email))
              .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.User.PhoneNumber))
-             .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan))
 
              .ForMember(dest => dest.UserCode, opt => opt.MapFrom(src => src.User.UserCode));
 
@@ -112,7 +113,6 @@ namespace GymSystem.API.Helpers
             CreateMap<Class, ClassViewDto>()
                   .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.MemberName))
                   .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
-                  .ForMember(dest => dest.Plan, opt => opt.MapFrom(src => src.Plan))
                   .ForMember(dest => dest.TrainerId, opt => opt.MapFrom(src => src.TrainerId));
 
             CreateMap<ClassDto, Class>()
@@ -126,6 +126,10 @@ namespace GymSystem.API.Helpers
 
             CreateMap<GymScheduleDto, GymSchedule>();
             CreateMap<GymSchedule, GymScheduleViewDto>();
+
+            CreateMap<Plan, PlanViewDto>();
+            CreateMap<OfferDto, Offer>();
+            CreateMap<Offer, OfferViewDto>();
         }
     }
 }

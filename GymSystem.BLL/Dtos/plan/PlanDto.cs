@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GymSystem.BLL.Dtos
+namespace GymSystem.BLL.Dtos.plan
 {
   
     public class PlanDto

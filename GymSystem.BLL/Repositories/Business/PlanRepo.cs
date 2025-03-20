@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
-using GymSystem.BLL.Errors;
+using GymSystem.BLL.Dtos.plan;
+using GymSystem.BLL.Errors; 
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using GymSystem.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,18 +25,65 @@ namespace GymSystem.BLL.Repositories
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<IReadOnlyList<PlanDto>> GetAllAsync(SpecPrams specParams = null)
+        //public async Task<IReadOnlyList<PlanDto>> GetAllAsync(SpecPrams specParams = null)
+        //{
+        //    try
+        //    {
+        //        var spec = specParams != null ? new PlanWithFiltersSpecification(specParams) : null;
+        //        var plans = await _unitOfWork.Repository<Plan>().GetAllWithSpecAsync(spec);
+        //        var planDtos = plans.Select(p => _mapper.Map<PlanDto>(p)).ToList();
+        //        return planDtos.AsReadOnly();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("Failed to retrieve plans from the database.", ex);
+        //    }
+        //}
+
+        public async Task<ApiResponse> GetPlans()
         {
             try
             {
-                var spec = specParams != null ? new PlanWithFiltersSpecification(specParams) : null;
-                var plans = await _unitOfWork.Repository<Plan>().GetAllWithSpecAsync(spec);
-                var planDtos = plans.Select(p => _mapper.Map<PlanDto>(p)).ToList();
-                return planDtos.AsReadOnly();
+                var plans = await _unitOfWork.Repository<Plan>().GetAllAsync();
+
+                var offerSpec = new BaseSpecification<Offer>(o => o.IsActive);
+                var offers = await _unitOfWork.Repository<Offer>().GetAllWithSpecAsync(offerSpec);
+
+                var planDtos = new List<PlanViewDto>();
+                foreach (var plan in plans)
+                {
+                    var planDto = _mapper.Map<PlanViewDto>(plan);
+
+                    //فيه عرض علي لخطة ولا لا
+                    var activeOffer = offers.FirstOrDefault(o =>
+                        o.PlanId == plan.Id &&
+                        o.StartDate <= DateTime.UtcNow &&
+                        o.EndDate >= DateTime.UtcNow);
+
+                    if (activeOffer != null)
+                    {
+                        planDto.HasOffer = true;
+                        planDto.DiscountedPrice = activeOffer.DiscountedPrice;
+                    }
+                    else
+                    {
+                        planDto.HasOffer = false;
+                        planDto.DiscountedPrice = null;
+                    }
+
+                    planDtos.Add(planDto);
+                }
+
+                if (!planDtos.Any())
+                {
+                    return new ApiResponse(200, "No plans found.", new List<PlanViewDto>());
+                }
+
+                return new ApiResponse(200, "Plans retrieved successfully", planDtos);
             }
             catch (Exception ex)
             {
-                throw new Exception("Failed to retrieve plans from the database.", ex);
+                return new ApiExceptionResponse(500, $"Failed to retrieve plans: {ex.Message}");
             }
         }
 
@@ -123,6 +172,8 @@ namespace GymSystem.BLL.Repositories
                 return new ApiExceptionResponse(500, "An error occurred while deleting the plan", ex.Message);
             }
         }
+
+       
     }
 
 }
