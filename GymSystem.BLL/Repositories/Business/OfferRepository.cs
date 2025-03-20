@@ -38,7 +38,6 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                // التحقق من وجود الخطة
                 var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync(offerDto.PlanId);
                 if (plan == null)
                 {
@@ -46,7 +45,6 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(404, $"Plan with ID {offerDto.PlanId} not found.");
                 }
 
-                // التحقق من صحة السعر المخفض
                 if (offerDto.DiscountedPrice >= plan.Price)
                 {
                     _logger.LogWarning("Discounted price {DiscountedPrice} is not less than original price {OriginalPrice} for Plan ID {PlanId}.",
@@ -54,7 +52,6 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(400, "Discounted price must be less than the original price.");
                 }
 
-                // التحقق من صحة التواريخ
                 if (!IsValidDateRange(offerDto.StartDate, offerDto.EndDate))
                 {
                     _logger.LogWarning("Invalid date range for offer on Plan ID {PlanId}. Start: {StartDate}, End: {EndDate}",
@@ -62,7 +59,7 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(400, "Start date must be before end date and not in the past.");
                 }
 
-                // التحقق من وجود عرض ساري على نفس الخطة
+                // التحقق من ان فيه عرض  ساري على نفس الخطة
                 var activeOfferSpec = new BaseSpecification<Offer>(o =>
                     o.PlanId == offerDto.PlanId &&
                     o.IsActive &&
