@@ -10,18 +10,15 @@ namespace GymSystem.BLL.Interfaces.Business
 {
     public interface IExerciseRepo
     {
-        //Task<ApiResponse> AddExercise(ExerciseDto exercise);
-        //Task<ApiResponse> UpdateExercise(int id, ExerciseDto exercise);
-        //Task<ApiResponse> DeleteExercise(int exerciseId);
-        //Task<IEnumerable<ExerciseDto>> GetExerciseList();
-        //Task<ExerciseDto> GetExerciseById(int exerciseId);
+        Task<ExerciseDto> AddExerciseAsync(ExerciseDto exerciseDto);
+        Task<ExerciseDto> UpdateExerciseAsync(int id, ExerciseDto exerciseDto);
+        Task<IEnumerable<ExerciseDto>> GetDailyExercisesAsync(string userId);
+        Task<IEnumerable<ExerciseDto>> SearchExercisesAsync(string searchTerm);
+        Task<ExerciseDto> GetExerciseAsync(int id);
+        Task<ApiResponse> AddToFavoritesAsync(int exerciseId, string userId);
+        Task<IEnumerable<ExerciseDto>> GetExercisesByCategoryAsync(int categoryId);
+        Task<ApiResponse> RemoveFromFavoritesAsync(int exerciseId, string userId);
+        Task<IEnumerable<ExerciseDto>> GetFavoritesAsync(string userId);
 
-        //====================
-               //Mopile
-            Task<IEnumerable<ExerciseDto>> GetDailyExercisesAsync(string userId);
-            Task<IEnumerable<ExerciseDto>> SearchExercisesAsync(string searchTerm);
-            Task<ExerciseDto> GetExerciseAsync(int id);
-            Task<ApiResponse> AddToFavoritesAsync(int exerciseId, string userId);
-        
     }
 }

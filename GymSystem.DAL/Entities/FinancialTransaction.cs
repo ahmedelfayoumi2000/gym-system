@@ -9,12 +9,11 @@ namespace GymSystem.DAL.Entities
 {
     public class FinancialTransaction : BaseEntity
     {
-        //public string UserId { get; set; } 
         public TransactionType TransactionType { get; set; } // نوع العملية
-        public decimal Amount { get; set; } 
+        public decimal Amount { get; set; }
         public DateTime TransactionDate { get; set; } // تاريخ العملية
-        public string Description { get; set; } 
-        public string CreatedByUserId { get; set; } //  المستخدم اللي سجل العملية
+        public string? Description { get; set; }
+        public string? CreatedByUserId { get; set; } //  المستخدم اللي سجل العملية
         public DateTime CreatedAt { get; set; }
         public bool IsDeleted { get; set; }
     }

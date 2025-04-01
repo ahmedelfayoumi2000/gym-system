@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DAL.Entities
 {
-    public class GymSchedule :BaseEntity
+    public class GymSchedule : BaseEntity
     {
         public DayOfWeekEnum DayOfWeek { get; set; }
         public TimeSpan StartTime { get; set; }

@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
+using GymSystem.BLL.Dtos.Attendance;
 using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
-using GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci;
+using GymSystem.BLL.Specifications.MembershipSpec;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
@@ -48,26 +49,19 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
+                await UpdateExpiredMemberships();
 
-                ISpecification<MonthlyMembership> spec = specParams != null
+                ISpecification<Membership> spec = specParams != null
                     ? new MonthlyMembershipWithFiltersSpecification(specParams)
                     : new MonthlyMembershipWithRelationsSpecification();
 
-                var memberships = await _unitOfWork.Repository<MonthlyMembership>().GetAllWithSpecAsync(spec);
-                var membershipDtos = _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
+                var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
 
-                foreach (var dto in membershipDtos)
-                {
-                    var membership = memberships.First(m => m.Id == dto.Id);
-                    dto.UserName = membership.User?.DisplayName;
-                    dto.UserCode = membership.User?.UserCode;
-                }
-
-                return membershipDtos;
+                return _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
             }
             catch (Exception ex)
             {
-                throw new ApplicationException("Failed to retrieve memberships.", ex);
+                throw new ApplicationException("An error occurred while retrieving memberships. Please try again later.", ex);
             }
         }
 
@@ -76,23 +70,28 @@ namespace GymSystem.BLL.Repositories.Business
             GuardAgainstInvalidId(id, "Membership ID");
 
             var spec = new MonthlyMembershipWithRelationsSpecification(m => m.Id == id);
-            var membership = await _unitOfWork.Repository<MonthlyMembership>().GetEntityWithSpecAsync(spec);
+            var membership = await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec);
+            await UpdateExpiredMembership(membership);
 
             return membership == null ? null : _mapper.Map<MonthlyMembershipViewDto>(membership);
         }
 
         public async Task<IEnumerable<MonthlyMembershipViewDto>> GetActiveMembershipsAsync()
         {
+            await UpdateExpiredMemberships();
+
             var spec = new MonthlyMembershipWithRelationsSpecification(m => m.IsActive);
-            var memberships = await _unitOfWork.Repository<MonthlyMembership>().GetAllWithSpecAsync(spec);
-            return MapMembershipsWithUserDetails(memberships);
+            var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
+            return _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
         }
 
         public async Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync()
         {
+            await UpdateExpiredMemberships();
+
             var spec = new MonthlyMembershipWithRelationsSpecification(m => !m.IsActive);
-            var memberships = await _unitOfWork.Repository<MonthlyMembership>().GetAllWithSpecAsync(spec);
-            return MapMembershipsWithUserDetails(memberships);
+            var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
+            return _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
         }
 
         #endregion
@@ -112,8 +111,18 @@ namespace GymSystem.BLL.Repositories.Business
                 {
                     return new ApiResponse(409, "User already has an active membership.");
                 }
+                if (plan.ExpireDate < DateTime.UtcNow || plan.HasOffer == false)
+                {
+                    plan.HasOffer = false;
+                    plan.DiscountedPrice = null;
+                    plan.ExpireDate = null;
+
+                    _unitOfWork.Repository<Plan>().Update(plan);
+                }
 
                 var membership = MapAndConfigureMembership(membershipDto, user, plan);
+                await _unitOfWork.Repository<Membership>().Add(membership);
+
                 await RecordFinancialTransaction(membership, TransactionType.Payment);
 
                 var result = await _unitOfWork.Complete();
@@ -149,7 +158,9 @@ namespace GymSystem.BLL.Repositories.Business
                 }
 
                 _mapper.Map(membershipDto, membership);
-                _unitOfWork.Repository<MonthlyMembership>().Update(membership);
+                await UpdateExpiredMembership(membership);
+
+                _unitOfWork.Repository<Membership>().Update(membership);
 
                 var saveResult = await _unitOfWork.Complete();
                 if (saveResult <= 0)
@@ -168,7 +179,7 @@ namespace GymSystem.BLL.Repositories.Business
             GuardAgainstInvalidId(id, "Membership ID");
 
             var membership = await GetMembershipOrFail(id);
-            _unitOfWork.Repository<MonthlyMembership>().Delete(membership);
+            _unitOfWork.Repository<Membership>().Delete(membership);
 
             var result = await _unitOfWork.Complete();
             return result > 0
@@ -178,20 +189,35 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<ApiResponse> StopMembershipAsync(StopMembershipDto stopMembershipDto, string currentUserId)
         {
-            GuardAgainstInvalidInput(stopMembershipDto, currentUserId);
+            try
+            {
+                GuardAgainstInvalidInput(stopMembershipDto, currentUserId);
 
-            var membership = await GetActiveMembershipByUserCode(stopMembershipDto.UserCode);
-            ValidateStopConditions(membership, stopMembershipDto);
+                var membership = await GetActiveMembershipByUserCode(stopMembershipDto.UserCode);
+                await ValidateStopConditions(membership, stopMembershipDto);
 
-            membership.EndDate = membership.EndDate.AddDays(stopMembershipDto.NumberOfDays);
-            membership.StopDate = DateTime.UtcNow.AddDays(stopMembershipDto.NumberOfDays);
-            membership.LastStopDate = DateTime.UtcNow;
-            _unitOfWork.Repository<MonthlyMembership>().Update(membership);
+                membership.EndDate = membership.EndDate.AddDays(stopMembershipDto.NumberOfDays);
+                membership.StopDate = DateTime.UtcNow.AddDays(stopMembershipDto.NumberOfDays);
+                membership.LastStopDate = DateTime.UtcNow;
+                membership.IsActive = false;
+                _unitOfWork.Repository<Membership>().Update(membership);
 
-            var saveResult = await _unitOfWork.Complete();
-            return saveResult > 0
-                ? new ApiResponse(200, "Membership stopped successfully")
-                : new ApiResponse(500, "Failed to persist the stop membership operation.");
+                var saveResult = await _unitOfWork.Complete();
+                if (saveResult <= 0)
+                {
+                    return new ApiResponse(500, "Failed to persist the stop membership operation.");
+                }
+
+                return new ApiResponse(200, "Membership stopped successfully");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return new ApiResponse(400, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse(500, "An unexpected error occurred while stopping the membership.");
+            }
         }
 
         public async Task<ApiResponse> RenewMembershipAsync(MonthlyMembershipRenewDto renewDto)
@@ -201,13 +227,24 @@ namespace GymSystem.BLL.Repositories.Business
             using (var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var membership = await GetMembershipOrFail(renewDto.MembershipId);
+                await UpdateExpiredMembership(membership);
+
                 var newPlan = await GetPlanOrFail(renewDto.PlanId);
 
+                if (newPlan.ExpireDate < DateTime.UtcNow || newPlan.HasOffer == false)
+                {
+                    newPlan.HasOffer = false;
+                    newPlan.DiscountedPrice = null;
+                    newPlan.ExpireDate = null;
+                }
+
                 membership.Plan = newPlan;
+                membership.Plan.Price = newPlan.DiscountedPrice ?? newPlan.Price;
                 membership.EndDate = membership.EndDate.AddDays(newPlan.DurationDays);
                 membership.IsActive = true;
                 membership.HaveDays = newPlan.DurationDays;
-                _unitOfWork.Repository<MonthlyMembership>().Update(membership);
+                _unitOfWork.Repository<Membership>().Update(membership);
+                _unitOfWork.Repository<Plan>().Update(newPlan);
 
                 await RecordFinancialTransaction(membership, TransactionType.Payment);
 
@@ -279,9 +316,96 @@ namespace GymSystem.BLL.Repositories.Business
 
         #endregion
 
-
-
         #region Private Helper Methods
+
+        private async Task<bool> HandleMembershipStatus(Membership membership)
+        {
+            if (membership == null)
+            {
+                _logger.LogWarning("Membership provided for status update is null.");
+                return false;
+            }
+
+            bool needsUpdate = false;
+
+            if (membership.EndDate < DateTime.UtcNow && membership.IsActive)
+            {
+                _logger.LogWarning("Membership for UserCode {UserCode} has expired on {EndDate}.", membership.UserCode, membership.EndDate);
+                membership.IsActive = false;
+                needsUpdate = true;
+            }
+
+            if (membership.StopDate.HasValue)
+            {
+                if (membership.StopDate < DateTime.UtcNow)
+                {
+                    _logger.LogInformation("StopDate for UserCode {UserCode} has expired. Resetting StopDate to null.", membership.UserCode);
+                    membership.StopDate = null;
+                    if (membership.EndDate >= DateTime.UtcNow)
+                    {
+                        membership.IsActive = true; // إعادة تفعيل لو الاشتراك لسه ساري
+                        needsUpdate = true;
+                    }
+                }
+                else if (membership.StopDate > DateTime.UtcNow && membership.IsActive)
+                {
+                    _logger.LogInformation("Membership for UserCode {UserCode} is currently stopped until {StopDate}.", membership.UserCode, membership.StopDate);
+                    membership.IsActive = false;
+                    needsUpdate = true;
+                }
+            }
+
+            if (membership.LastStopDate.HasValue && membership.LastStopDate.Value.Month == DateTime.UtcNow.Month)
+            {
+                _logger.LogInformation("Membership for UserCode {UserCode} was stopped this month. No further stop allowed.", membership.UserCode);
+                return false;
+            }
+
+            if (needsUpdate)
+            {
+                _unitOfWork.Repository<Membership>().Update(membership);
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task UpdateExpiredMemberships()
+        {
+            var spec = new MonthlyMembershipWithRelationsSpecification(m => m.IsActive);
+            var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
+
+            if (!memberships.Any())
+            {
+                _logger.LogInformation("No memberships found to update.");
+                return;
+            }
+
+            var expiredList = memberships.ToList();
+            var updatedCount = 0;
+
+            foreach (var membership in expiredList)
+            {
+                if (await HandleMembershipStatus(membership))
+                {
+                    updatedCount++;
+                }
+            }
+
+            if (updatedCount > 0)
+            {
+                await _unitOfWork.Complete();
+                _logger.LogInformation("Updated {Count} memberships.", updatedCount);
+            }
+        }
+
+        private async Task UpdateExpiredMembership(Membership membership)
+        {
+            if (await HandleMembershipStatus(membership))
+            {
+                await _unitOfWork.Complete();
+            }
+        }
 
         private void GuardAgainstInvalidId(int id, string entityName)
         {
@@ -302,11 +426,12 @@ namespace GymSystem.BLL.Repositories.Business
             if (!Guid.TryParse(currentUserId, out _)) throw new SecurityException("Current user ID must be a valid GUID.");
         }
 
-        private async Task<MonthlyMembership> GetMembershipOrFail(int id)
+        private async Task<Membership> GetMembershipOrFail(int id)
         {
             var spec = new MonthlyMembershipWithRelationsSpecification(m => m.Id == id);
-            var membership = await _unitOfWork.Repository<MonthlyMembership>().GetEntityWithSpecAsync(spec);
+            var membership = await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec);
             if (membership == null) throw new KeyNotFoundException($"Membership with ID {id} not found.");
+
             return membership;
         }
 
@@ -314,6 +439,7 @@ namespace GymSystem.BLL.Repositories.Business
         {
             var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync(planId);
             if (plan == null) throw new KeyNotFoundException("Plan not found.");
+
             return plan;
         }
 
@@ -329,13 +455,17 @@ namespace GymSystem.BLL.Repositories.Business
                     UserName = membershipDto.UserName,
                     Email = membershipDto.UserEmail,
                     PhoneNumber = membershipDto.phoneNumber,
-                    UserRole = 1,
+                    UserRole = 1, 
                     EmailConfirmed = true,
                     UserCode = userCode
                 };
 
                 var result = await _userService.CreateAsync(existingUser, "Default@123");
-                if (!result.Succeeded) throw new InvalidOperationException("Failed to create user.");
+                if (!result.Succeeded) throw new InvalidOperationException("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                string roleName = existingUser.UserRole == 1 ? "Member" : null;
+                var roleResult = await _userService.AddToRoleAsync(existingUser, roleName);
+                if (!roleResult.Succeeded) throw new InvalidOperationException("Failed to assign role to user: " + string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
             else if (string.IsNullOrEmpty(existingUser.UserCode))
             {
@@ -348,13 +478,13 @@ namespace GymSystem.BLL.Repositories.Business
 
         private async Task<bool> HasActiveMembership(string userId)
         {
-            var spec = new BaseSpecification<MonthlyMembership>(m => m.UserId == userId && m.IsActive);
-            return await _unitOfWork.Repository<MonthlyMembership>().GetEntityWithSpecAsync(spec) != null;
+            var spec = new MembershipByUserCodeAndActiveSpecification(userId);
+            return await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec) != null;
         }
 
-        private MonthlyMembership MapAndConfigureMembership(MonthlyMembershipCreateDto dto, AppUser user, Plan plan)
+        private Membership MapAndConfigureMembership(MonthlyMembershipCreateDto dto, AppUser user, Plan plan)
         {
-            var membership = _mapper.Map<MonthlyMembership>(dto);
+            var membership = _mapper.Map<Membership>(dto);
             membership.User = user;
             membership.UserId = user.Id;
             membership.UserName = user.UserName;
@@ -368,12 +498,12 @@ namespace GymSystem.BLL.Repositories.Business
             return membership;
         }
 
-        private async Task RecordFinancialTransaction(MonthlyMembership membership, TransactionType transactionType)
+        private async Task RecordFinancialTransaction(Membership membership, TransactionType transactionType)
         {
             var transaction = new FinancialTransaction
             {
                 TransactionType = transactionType,
-                Amount = membership.Plan.Price,
+                Amount = membership.Plan.DiscountedPrice ?? membership.Plan.Price,
                 TransactionDate = DateTime.UtcNow,
                 Description = $"Membership payment for UserCode: {membership.UserCode}",
                 CreatedByUserId = membership.UserId,
@@ -384,9 +514,10 @@ namespace GymSystem.BLL.Repositories.Business
             await _unitOfWork.Repository<FinancialTransaction>().Add(transaction);
         }
 
-        private IEnumerable<MonthlyMembershipViewDto> MapMembershipsWithUserDetails(IEnumerable<MonthlyMembership> memberships)
+        private IEnumerable<MonthlyMembershipViewDto> MapMembershipsWithUserDetails(IEnumerable<Membership> memberships)
         {
             var membershipDtos = _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
+
             foreach (var dto in membershipDtos)
             {
                 var membership = memberships.First(m => m.Id == dto.Id);
@@ -396,21 +527,57 @@ namespace GymSystem.BLL.Repositories.Business
             return membershipDtos;
         }
 
-        private async Task<MonthlyMembership> GetActiveMembershipByUserCode(string userCode)
+        private async Task<Membership> GetActiveMembershipByUserCode(string userCode)
         {
-            var spec = new BaseSpecification<MonthlyMembership>(m => m.UserCode == userCode && m.IsActive);
-            var membership = await _unitOfWork.Repository<MonthlyMembership>().GetEntityWithSpecAsync(spec);
+            var spec = new MembershipByUserCodeAndActiveSpecification(userCode);
+            var membership = await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec);
             if (membership == null) throw new KeyNotFoundException($"Active membership for UserCode {userCode} not found.");
+            if (!membership.IsActive)
+            {
+                throw new InvalidOperationException($"Membership for UserCode {userCode} is not active. Please subscribe to a new plan to continue.");
+            }
+            if (membership.EndDate < DateTime.UtcNow)
+            {
+                membership.IsActive = false;
+                _unitOfWork.Repository<Membership>().Update(membership);
+
+                throw new InvalidOperationException($"Your membership expired on {membership.EndDate:yyyy-MM-dd}. Please renew your plan.");
+            }
             return membership;
         }
 
-        private void ValidateStopConditions(MonthlyMembership membership, StopMembershipDto stopMembershipDto)
+        private async Task ValidateStopConditions(Membership membership, StopMembershipDto stopMembershipDto)
         {
-            if (membership.LastStopDate.HasValue && membership.LastStopDate.Value > DateTime.UtcNow.AddMonths(-1))
-                throw new InvalidOperationException("You can only stop your membership once per month.");
+            GuardAgainstNullInput(membership, nameof(membership));
+            GuardAgainstNullInput(stopMembershipDto, nameof(stopMembershipDto));
 
-            if (membership.StopDate.HasValue && membership.StopDate.Value > DateTime.UtcNow)
-                throw new InvalidOperationException($"Membership is already stopped until {membership.StopDate.Value:yyyy-MM-dd}.");
+            if (membership.LastStopDate.HasValue && membership.LastStopDate.Value > DateTime.UtcNow.AddMonths(-1))
+            {
+                if (!membership.StopDate.HasValue || membership.StopDate < DateTime.UtcNow)
+                {
+                    membership.StopDate = null;
+                    await HandleMembershipStatus(membership);
+                    await _unitOfWork.Complete();
+                }
+                else
+                {
+                    throw new InvalidOperationException("You can only stop your membership once per month.");
+                }
+            }
+
+            if (membership.StopDate.HasValue)
+            {
+                if (membership.StopDate < DateTime.UtcNow)
+                {
+                    membership.StopDate = null;
+                    await HandleMembershipStatus(membership);
+                    await _unitOfWork.Complete();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Membership is already stopped until {membership.StopDate.Value:yyyy-MM-dd}.");
+                }
+            }
         }
 
         private async Task<bool> UpdateUserIfChanged(AppUser user, MonthlyMembershipUpdateDto membershipDto)
@@ -442,5 +609,4 @@ namespace GymSystem.BLL.Repositories.Business
 
         #endregion
     }
-
 }

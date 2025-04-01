@@ -8,10 +8,9 @@ namespace GymSystem.DAL.Entities.Enums.Business
 {
     public enum TransactionType
     {
-        Payment,      // دفع زي اشتراك مشترك
+        Payment,      // دفع زي اشتراك مشترك او حصه
         Withdrawal,   // سحب زى مصروفات إصلاح معدات
         Refund,       // استرداد فلوس
         Other         // عمليات أخرى
     }
 }
-    

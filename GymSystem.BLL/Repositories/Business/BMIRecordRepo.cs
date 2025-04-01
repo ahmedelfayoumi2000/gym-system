@@ -63,7 +63,7 @@ namespace GymSystem.BLL.Repositories.Business
 
             return bmiRecords.Select(x => new
             {
-                id = x.Id, 
+                id = x.Id,
                 Category = x.Category.ToString(),
                 x.MeasurementDate
             }).ToList();

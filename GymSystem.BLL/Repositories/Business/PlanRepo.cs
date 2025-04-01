@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Dtos.plan;
-using GymSystem.BLL.Errors; 
+using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.PlanSpec;
 using GymSystem.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
-using StackExchange.Redis;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,59 +25,19 @@ namespace GymSystem.BLL.Repositories
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        //public async Task<IReadOnlyList<PlanDto>> GetAllAsync(SpecPrams specParams = null)
-        //{
-        //    try
-        //    {
-        //        var spec = specParams != null ? new PlanWithFiltersSpecification(specParams) : null;
-        //        var plans = await _unitOfWork.Repository<Plan>().GetAllWithSpecAsync(spec);
-        //        var planDtos = plans.Select(p => _mapper.Map<PlanDto>(p)).ToList();
-        //        return planDtos.AsReadOnly();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("Failed to retrieve plans from the database.", ex);
-        //    }
-        //}
-
         public async Task<ApiResponse> GetPlans()
         {
             try
             {
+                await CleanExpiredOffers();
+
                 var plans = await _unitOfWork.Repository<Plan>().GetAllAsync();
-
-                var offerSpec = new BaseSpecification<Offer>(o => o.IsActive);
-                var offers = await _unitOfWork.Repository<Offer>().GetAllWithSpecAsync(offerSpec);
-
-                var planDtos = new List<PlanViewDto>();
-                foreach (var plan in plans)
-                {
-                    var planDto = _mapper.Map<PlanViewDto>(plan);
-
-                    //فيه عرض علي لخطة ولا لا
-                    var activeOffer = offers.FirstOrDefault(o =>
-                        o.PlanId == plan.Id &&
-                        o.StartDate <= DateTime.UtcNow &&
-                        o.EndDate >= DateTime.UtcNow);
-
-                    if (activeOffer != null)
-                    {
-                        planDto.HasOffer = true;
-                        planDto.DiscountedPrice = activeOffer.DiscountedPrice;
-                    }
-                    else
-                    {
-                        planDto.HasOffer = false;
-                        planDto.DiscountedPrice = null;
-                    }
-
-                    planDtos.Add(planDto);
-                }
-
-                if (!planDtos.Any())
+                if (!plans.Any())
                 {
                     return new ApiResponse(200, "No plans found.", new List<PlanViewDto>());
                 }
+
+                var planDtos = plans.Select(plan => _mapper.Map<PlanViewDto>(plan)).ToList();
 
                 return new ApiResponse(200, "Plans retrieved successfully", planDtos);
             }
@@ -87,12 +47,14 @@ namespace GymSystem.BLL.Repositories
             }
         }
 
-        public async Task<PlanDto> GetByIdAsync(int id)
+        public async Task<PlanViewDto> GetByIdAsync(int id)
         {
             try
             {
                 var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync(id);
-                return plan == null ? null : _mapper.Map<PlanDto>(plan);
+                await CleanExpiredOffers(plan);
+
+                return plan == null ? null : _mapper.Map<PlanViewDto>(plan);
             }
             catch (Exception ex)
             {
@@ -173,7 +135,87 @@ namespace GymSystem.BLL.Repositories
             }
         }
 
-       
-    }
+        private async Task CleanExpiredOffers()
+        {
+            try
+            {
+                var plans = await _unitOfWork.Repository<Plan>().GetAllAsync();
+                if (!plans.Any())
+                {
+                    return;
+                }
 
+                var offerSpec = new ActiveOffersSpecification();
+                var activeOffers = await _unitOfWork.Repository<Offer>().GetAllWithSpecAsync(offerSpec);
+
+                foreach (var plan in plans)
+                {
+                    if (plan.HasOffer && plan.ExpireDate.HasValue && plan.ExpireDate.Value.Date < DateTime.UtcNow.Date)
+                    {
+                        plan.HasOffer = false;
+                        plan.DiscountedPrice = null;
+                        plan.ExpireDate = null;
+                        _unitOfWork.Repository<Plan>().Update(plan);
+
+                        var relatedOffer = activeOffers.FirstOrDefault(o => o.PlanId == plan.Id);
+                        if (relatedOffer != null)
+                        {
+                            relatedOffer.IsActive = false;
+                            _unitOfWork.Repository<Offer>().Update(relatedOffer);
+                        }
+                    }
+                }
+
+                var result = await _unitOfWork.Complete();
+                if (result < 0)
+                {
+                    throw new Exception("Failed to update plans and offers with expired offers.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to clean up expired offers.", ex);
+            }
+        }
+
+        private async Task CleanExpiredOffers(Plan plan)
+        {
+            try
+            {
+                var fetchedPlan = await _unitOfWork.Repository<Plan>().GetByIdAsync(plan.Id);
+                if (fetchedPlan == null)
+                {
+                    return;
+                }
+
+                var offerSpec = new ActiveOffersSpecification();
+                var activeOffers = await _unitOfWork.Repository<Offer>().GetAllWithSpecAsync(offerSpec);
+
+                if (fetchedPlan.HasOffer && fetchedPlan.ExpireDate.HasValue && fetchedPlan.ExpireDate.Value.Date < DateTime.UtcNow.Date)
+                {
+                    fetchedPlan.HasOffer = false;
+                    fetchedPlan.DiscountedPrice = null;
+                    fetchedPlan.ExpireDate = null;
+                    _unitOfWork.Repository<Plan>().Update(fetchedPlan);
+
+                    var relatedOffer = activeOffers.FirstOrDefault(o => o.PlanId == fetchedPlan.Id);
+                    if (relatedOffer != null)
+                    {
+                        relatedOffer.IsActive = false;
+                        _unitOfWork.Repository<Offer>().Update(relatedOffer);
+                    }
+                }
+
+                var result = await _unitOfWork.Complete();
+                if (result < 0)
+                {
+                    throw new Exception("Failed to update plans and offers with expired offers.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to clean up expired offers.", ex);
+            }
+        }
+    }
 }

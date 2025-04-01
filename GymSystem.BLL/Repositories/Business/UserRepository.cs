@@ -23,5 +23,10 @@ namespace GymSystem.BLL.Repositories.Business
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userCode);
         }
+        public async Task<AppUser> GetUserByIdAsync(string userId)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
     }
 }

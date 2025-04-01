@@ -15,5 +15,6 @@ namespace GymSystem.BLL.Dtos.Trainer
         public uint Age { get; set; }
         public Address Address { get; set; }
         public decimal Salary { get; set; }
+
     }
 }

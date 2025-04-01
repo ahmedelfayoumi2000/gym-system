@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DAL.Entities
 {
-    public class Feedback: BaseEntity
+    public class Feedback : BaseEntity
     {
-        //public int FeedbackId { get; set; }
         public string? Comments { get; set; }
         public int Rating { get; set; }
         public string UserId { get; set; }

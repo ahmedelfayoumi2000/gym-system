@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class FeedbackController : BaseApiController
     {
         private readonly IFeedbackRepo _feedbackRepo;
@@ -22,11 +20,6 @@ namespace GymSystem.API.Controllers
             _feedbackRepo = feedbackRepo ?? throw new ArgumentNullException(nameof(feedbackRepo));
         }
 
-        /// <summary>
-        /// Retrieves a specific feedback record by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the feedback to retrieve.</param>
-        /// <returns>The feedback details if found, or an error response.</returns>
         [Authorize(Roles = "Admin,Trainer")]
         [HttpGet("getFeedback")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -62,10 +55,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all feedback records in the system.
-        /// </summary>
-        /// <returns>A list of all feedback records if successful, or an error response.</returns>
+      
         [Authorize(Roles = "Admin,Trainer")]
         [HttpGet("getAllFeedbacks")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -84,11 +74,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Creates a new feedback record for the authenticated member.
-        /// </summary>
-        /// <param name="feedbackDto">The feedback data to create.</param>
-        /// <returns>The result of the operation, including the created feedback if successful.</returns>
+      
         [Authorize(Roles = "Member")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -122,11 +108,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes a specific feedback record by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the feedback to delete.</param>
-        /// <returns>The result of the operation, including confirmation if successful.</returns>
+      
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -162,12 +144,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates an existing feedback record by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the feedback to update.</param>
-        /// <param name="feedbackDto">The updated feedback data.</param>
-        /// <returns>The result of the operation, including the updated feedback if successful.</returns>
+       
         [Authorize(Roles = "Member")]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

@@ -9,13 +9,11 @@ namespace GymSystem.BLL.Interfaces.Business
 {
     public interface IPlanRepo
     {
-        //Task<IReadOnlyList<PlanDto>> GetAllAsync(SpecPrams specParams = null);
-        Task<PlanDto> GetByIdAsync(int id);
+        Task<PlanViewDto> GetByIdAsync(int id);
         Task<ApiResponse> CreateAsync(PlanDto planDto);
         Task<ApiResponse> UpdateAsync(int id, PlanDto planDto);
         Task<ApiResponse> DeleteAsync(int id);
 
-        //--------------
         Task<ApiResponse> GetPlans();
     }
 }

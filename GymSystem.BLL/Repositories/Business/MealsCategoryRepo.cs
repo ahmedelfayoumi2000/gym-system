@@ -4,20 +4,21 @@ using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.MealsCategorySpec;
 using GymSystem.DAL.Entities;
 using Microsoft.Extensions.Logging;
-
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Repositories.Business
 {
-   
     public class MealsCategoryRepository : IMealsCategoryRepo
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly ILogger<MealsCategoryRepository> _logger;
 
-      
         public MealsCategoryRepository(
             IUnitOfWork unitOfWork,
             IMapper mapper,
@@ -40,8 +41,8 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogInformation("Attempting to add meals category with name: {CategoryName}", mealsCategory.CategoryName);
 
-                var spec = new BaseSpecification<MealsCategory>(mc => mc.CategoryName == mealsCategory.CategoryName && !mc.IsDeleted);
-                var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetByIdWithSpecAsync(spec);
+                var spec = new MealsCategoryByNameSpecification(mealsCategory.CategoryName);
+                var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (existingCategory != null)
                 {
                     _logger.LogWarning("Meals category with name {CategoryName} already exists.", mealsCategory.CategoryName);
@@ -62,15 +63,14 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-      
         public async Task<ApiResponse> Delete(int mealsCategoryId)
         {
             try
             {
                 _logger.LogInformation("Attempting to delete meals category with ID: {Id}", mealsCategoryId);
 
-                var spec = new BaseSpecification<MealsCategory>(mc => mc.Id == mealsCategoryId && !mc.IsDeleted);
-                var category = await _unitOfWork.Repository<MealsCategory>().GetByIdWithSpecAsync(spec);
+                var spec = new MealsCategoryByIdSpecification(mealsCategoryId);
+                var category = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (category == null)
                 {
                     _logger.LogWarning("Meals category with ID {Id} not found or already deleted.", mealsCategoryId);
@@ -91,14 +91,13 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-        
         public async Task<IEnumerable<MealsCategoryDto>> GetAllMealsCategory()
         {
             try
             {
                 _logger.LogInformation("Retrieving all active meals categories.");
 
-                var spec = new BaseSpecification<MealsCategory>(mc => !mc.IsDeleted);
+                var spec = new AllMealsCategoriesSpecification();
                 var categories = await _unitOfWork.Repository<MealsCategory>().GetAllWithSpecAsync(spec);
                 var categoryDtos = _mapper.Map<IEnumerable<MealsCategoryDto>>(categories);
 
@@ -112,15 +111,14 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-
         public async Task<MealsCategoryDto> GetMealsCategoryById(int mealsCategoryId)
         {
             try
             {
                 _logger.LogInformation("Retrieving meals category with ID: {Id}", mealsCategoryId);
 
-                var spec = new BaseSpecification<MealsCategory>(mc => mc.Id == mealsCategoryId && !mc.IsDeleted);
-                var category = await _unitOfWork.Repository<MealsCategory>().GetByIdWithSpecAsync(spec);
+                var spec = new MealsCategoryByIdSpecification(mealsCategoryId);
+                var category = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (category == null)
                 {
                     _logger.LogWarning("Meals category with ID {Id} not found.", mealsCategoryId);
@@ -138,7 +136,6 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-       
         public async Task<ApiResponse> Update(MealsCategoryDto mealsCategory)
         {
             if (mealsCategory == null)
@@ -151,8 +148,8 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogInformation("Attempting to update meals category with ID: {Id}", mealsCategory.MealsCategoryId);
 
-                var spec = new BaseSpecification<MealsCategory>(mc => mc.Id == mealsCategory.MealsCategoryId && !mc.IsDeleted);
-                var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetByIdWithSpecAsync(spec);
+                var spec = new MealsCategoryByIdSpecification(mealsCategory.MealsCategoryId);
+                var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (existingCategory == null)
                 {
                     _logger.LogWarning("Meals category with ID {Id} not found or already deleted.", mealsCategory.MealsCategoryId);

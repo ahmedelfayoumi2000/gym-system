@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GymSystem.API.DTOs.Trainer;
 using GymSystem.BLL.Dtos.Trainer;
+using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -73,21 +74,38 @@ namespace GymSystem.BLL.Services
             return result.Succeeded;
         }
 
-        public async Task<bool> SuspendTrainerAsync(string id)
+        public async Task<ApiResponse> SuspendTrainerAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
 
             if (user == null)
             {
-                throw new System.Exception("Trainer not found.");
+                return new ApiResponse(404, "Trainer not found.");
             }
 
             user.IsStopped = true;
-            user.StopDate = System.DateTime.UtcNow;
+            user.StopDate = DateTime.UtcNow;
 
             var result = await _userManager.UpdateAsync(user);
 
-            return result.Succeeded;
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new ApiResponse(500, $"Failed to suspend trainer: {errors}");
+            }
+
+            // إرجاع بيانات المدرب بعد التحديث
+            var trainerData = new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.IsStopped,
+                user.StopDate
+            };
+
+            return new ApiResponse(200, "Trainer suspended successfully.", trainerData);
         }
+
     }
 }

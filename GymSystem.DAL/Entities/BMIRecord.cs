@@ -10,7 +10,6 @@ namespace GymSystem.DAL.Entities
 {
     public class BMIRecord : BaseEntity
     {
-        //public int BMIRecordId { get; set; }
         public BMICategory Category { get; set; }
         public DateTime MeasurementDate { get; set; } = DateTime.Now;
         public bool IsDeleted { get; set; }

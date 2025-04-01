@@ -233,7 +233,7 @@ namespace GymSystem.API.Controllers
         // Helper Method
         private string GenerateCallBackUrl(string token, string userId)
         {
-            var baseUrl = _configuration["BaseUrl"] ?? $"{Request.Scheme}:{Request.Host}";
+            var baseUrl = _configuration["BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
             var encodedToken = Uri.EscapeDataString(token);
             var encodedUserId = Uri.EscapeDataString(userId);
             var callBackUrl = $"{baseUrl}/api/Account/confirm-email?userId={encodedUserId}&confirmationToken={encodedToken}";

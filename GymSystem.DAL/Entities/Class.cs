@@ -12,16 +12,7 @@ namespace GymSystem.DAL.Entities
 
         public int? PlanId { get; set; }
         public Plan? Plan { get; set; }
-
         public string? TrainerId { get; set; }
         public AppUser? Trainer { get; set; }
-
-        //===============================
-        public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
-
-        //public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
-        //======================
-
-        public ICollection<ClassEquipment> ClassEquipments { get; set; } = new List<ClassEquipment>();
     }
 }

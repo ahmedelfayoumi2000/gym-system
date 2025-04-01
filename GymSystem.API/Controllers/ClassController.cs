@@ -1,11 +1,11 @@
 ﻿using GymSystem.BLL.Dtos.Class;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
+using GymSystem.BLL.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,19 +22,14 @@ namespace GymSystem.API.Controllers
 
         [Authorize(Roles = "Admin,Receptionist,Trainer")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiExceptionResponse))]
-        public async Task<IActionResult> GetAllClasses()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllClasses([FromQuery] SpecPrams specParams)
         {
             try
             {
-                var classes = await _classRepo.GetClasses();
-                var classList = classes.ToList();
-                if (!classList.Any())
-                {
-                    return Ok(new ApiResponse(200, "No classes found.", new List<ClassViewDto>()));
-                }
-                return Ok(new ApiResponse(200, "Classes retrieved successfully", classList));
+                var paginatedResult = await _classRepo.GetClasses(specParams);
+                return Ok(new ApiResponse(200, "Classes retrieved successfully", paginatedResult));
             }
             catch (Exception ex)
             {
@@ -45,10 +40,10 @@ namespace GymSystem.API.Controllers
 
         [Authorize(Roles = "Admin,Receptionist,Trainer")]
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiExceptionResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetClassById(int id)
         {
             if (!IsValidId(id))
@@ -63,6 +58,7 @@ namespace GymSystem.API.Controllers
                 {
                     return NotFound(new ApiResponse(404, $"Class with ID {id} not found"));
                 }
+
                 return Ok(new ApiResponse(200, "Class retrieved successfully", classDto));
             }
             catch (Exception ex)
@@ -74,16 +70,15 @@ namespace GymSystem.API.Controllers
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiExceptionResponse))]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateClass([FromBody] ClassDto classDto)
         {
-            if (classDto == null || !ModelState.IsValid)
+            if (!IsValidModel(classDto))
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(CreateValidationError("Invalid class data: " + string.Join(", ", errors)));
+                return BadRequest(CreateValidationError("Invalid class data"));
             }
 
             try
@@ -100,10 +95,10 @@ namespace GymSystem.API.Controllers
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiExceptionResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateClass(int id, [FromBody] ClassDto classDto)
         {
             if (!IsValidId(id))
@@ -111,10 +106,9 @@ namespace GymSystem.API.Controllers
                 return BadRequest(CreateValidationError("Class ID must be a positive integer."));
             }
 
-            if (classDto == null || !ModelState.IsValid)
+            if (!IsValidModel(classDto))
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(CreateValidationError("Invalid class data: " + string.Join(", ", errors)));
+                return BadRequest(CreateValidationError("Invalid class data"));
             }
 
             try
@@ -131,10 +125,10 @@ namespace GymSystem.API.Controllers
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ApiExceptionResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteClass(int id)
         {
             if (!IsValidId(id))
@@ -155,6 +149,7 @@ namespace GymSystem.API.Controllers
         }
 
         #region Private Helper Methods
+
         private bool IsValidId(int id) => id > 0;
 
         private bool IsValidModel(object model) => ModelState.IsValid && model != null;
@@ -182,6 +177,7 @@ namespace GymSystem.API.Controllers
                 _ => StatusCode(response.StatusCode ?? 500, response)
             };
         }
+
         #endregion
     }
 }

@@ -11,5 +11,6 @@ namespace GymSystem.BLL.Interfaces.Business
     {
         Task<IEnumerable<RecipeDto>> GetRecipesAsync();
         Task<RecipeDto> GetRecipeAsync(int id);
+        Task<RecipeDto> AddRecipeAsync(RecipeDto recipeDto);
     }
 }

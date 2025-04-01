@@ -12,14 +12,14 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
     {
         public EquipmentWithRelationsSpecification()
         {
-            AddIncludes(e => e.MaintainedByUsers);
-            AddIncludes(e => e.UsedInClasses);
+            //AddIncludes(e => e.MaintainedByUsers);
+            //AddIncludes(e => e.UsedInClasses);
         }
 
         public EquipmentWithRelationsSpecification(Expression<Func<Equipment, bool>> criteria) : base(criteria)
         {
-            AddIncludes(e => e.MaintainedByUsers);
-            AddIncludes(e => e.UsedInClasses);
+            //AddIncludes(e => e.MaintainedByUsers);
+            //AddIncludes(e => e.UsedInClasses);
         }
     }
 }

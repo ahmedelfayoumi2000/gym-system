@@ -14,7 +14,7 @@ namespace GymSystem.DAL.Entities
         public string PlanName { get; set; }
         public string Description { get; set; }
         public bool IsDeleted { get; set; }
-        public ICollection<Meal> Meals { get; set; }
+        public ICollection<Meal> Meals { get; set; } = new List<Meal>();
         public ICollection<AppUser> Users { get; set; }
     }
 }

@@ -24,17 +24,7 @@ namespace GymSystem.DAL.Configurations
             builder.Property(e => e.LastMaintenanceDate)
                    .IsRequired();
 
-            // العلاقة مع AppUser عبر EquipmentMaintenance
-            builder.HasMany(e => e.MaintainedByUsers)
-                   .WithOne(em => em.Equipment)
-                   .HasForeignKey(em => em.EquipmentId)
-                   .OnDelete(DeleteBehavior.Cascade);
 
-            // العلاقة مع Class عبر ClassEquipment
-            builder.HasMany(e => e.UsedInClasses)
-                   .WithOne(ce => ce.Equipment)
-                   .HasForeignKey(ce => ce.EquipmentId)
-                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

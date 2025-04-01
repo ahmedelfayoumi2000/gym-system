@@ -1,5 +1,4 @@
-﻿// GymSystem.BLL/Services/UserService.cs
-using GymSystem.BLL.Interfaces;
+﻿using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -22,5 +21,8 @@ namespace GymSystem.BLL.Services
         public Task<IdentityResult> CreateAsync(AppUser user, string password) => _userManager.CreateAsync(user, password);
         public Task<IdentityResult> UpdateAsync(AppUser user) => _userManager.UpdateAsync(user);
         public Task<int> CountAsync() => _userManager.Users.CountAsync();
+        public async Task<IdentityResult> AddToRoleAsync(AppUser user, string role) => await _userManager.AddToRoleAsync(user, role);
+
+
     }
 }

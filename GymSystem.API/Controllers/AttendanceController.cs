@@ -10,16 +10,23 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security;
 using System.Threading.Tasks;
+using GymSystem.API.Helpers;
+using GymSystem.BLL.Specifications.AttendanceSpec;
+using GymSystem.DAL.Entities;
+using GymSystem.BLL.Specifications;
+using AutoMapper;
 
 namespace GymSystem.API.Controllers
 {
+
     public class AttendanceController : BaseApiController
     {
         private readonly IDailyAttendanceRepo _attendanceRepo;
-
-        public AttendanceController(IDailyAttendanceRepo attendanceRepo)
+        private readonly IMapper _mapper;
+        public AttendanceController(IDailyAttendanceRepo attendanceRepo , IMapper mapper)
         {
-            _attendanceRepo = attendanceRepo ?? throw new ArgumentNullException(nameof(attendanceRepo));
+            _attendanceRepo = attendanceRepo;
+            _mapper = mapper;
         }
 
         [Authorize(Roles = "Admin,Receptionist")]
@@ -28,14 +35,13 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAttendances([FromQuery] string userCode)
+        public async Task<IActionResult> GetAttendances([FromQuery] SpecPrams attendanceParams)
         {
-            if (string.IsNullOrWhiteSpace(userCode) || !ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(attendanceParams.UserCode))
             {
                 return BadRequest(new ApiValidationErrorResponse
                 {
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                        .Concat(new[] { "UserCode is required." }).ToList(),
+                    Errors = new List<string> { "UserCode is required." },
                     StatusCode = 400,
                     Message = "Invalid request data"
                 });
@@ -43,18 +49,32 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                var attendances = await _attendanceRepo.GetAttendancesForUserAsync(userCode);
+                var spec = new AttendanceByUserCodeSpec(attendanceParams);
+
+                var countSpec = new AttendanceWithFiltersForCountSpecification(attendanceParams);
+
+                var totalItems = await _attendanceRepo.GetCountAsync(countSpec);
+
+                var attendances = await _attendanceRepo.GetAllWithSpecAsync(spec);
+
                 if (attendances == null || !attendances.Any())
                 {
                     return NotFound(new ApiResponse(404, "No attendance records found for the specified user."));
                 }
 
-                return Ok(new ApiResponse(200, "Daily attendances retrieved successfully", attendances));
+                var data = _mapper.Map<IReadOnlyList<Attendance>, IReadOnlyList<AttendanceDto>>(attendances);
+
+                return Ok(new Pagination<AttendanceDto>(
+                    attendanceParams.PageIndex,
+                    attendanceParams.PageSize,
+                    totalItems,
+                    data
+                ));
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "An error occurred while retrieving daily attendances", ex.Message));
+                    new ApiExceptionResponse(500, "An error occurred while retrieving attendances", ex.Message));
             }
         }
 
@@ -89,7 +109,7 @@ namespace GymSystem.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest( new ApiExceptionResponse(500, "An error occurred while adding daily attendance", ex.Message));
+                return BadRequest(new ApiExceptionResponse(500, "An error occurred while adding attendance", ex.Message));
             }
         }
 
@@ -116,6 +136,7 @@ namespace GymSystem.API.Controllers
             try
             {
                 var response = await _attendanceRepo.DeleteAttendanceAsync(id);
+
                 return response.StatusCode switch
                 {
                     200 => Ok(response),
@@ -127,11 +148,10 @@ namespace GymSystem.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new ApiExceptionResponse(500, "An error occurred while deleting daily attendance", ex.Message));
+                return BadRequest(new ApiExceptionResponse(500, "An error occurred while deleting attendance", ex.Message));
             }
         }
 
-       
         [HttpGet("generate-qr")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -149,7 +169,6 @@ namespace GymSystem.API.Controllers
                     return Unauthorized(new ApiResponse(401, "User authentication required."));
                 }
 
-                // Generate the QR Code
                 var qrCodeDto = await _attendanceRepo.GenerateQRCodeAsync(userId);
                 return Ok(new ApiResponse(200, "QR Code generated successfully", qrCodeDto));
             }
@@ -176,7 +195,7 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [Authorize(Roles = "Admin,Receptionist")] 
+        [Authorize(Roles = "Admin,Receptionist")]
         public async Task<IActionResult> CheckIn([FromBody] AttendanceCheckInDto checkInDto)
         {
             if (!ModelState.IsValid || checkInDto == null)
@@ -201,7 +220,6 @@ namespace GymSystem.API.Controllers
                     new ApiExceptionResponse(500, "An error occurred while recording the check-in", ex.Message));
             }
         }
-
         #region Private Helper Methods
 
         private ApiValidationErrorResponse CreateValidationError(string message)
@@ -230,5 +248,8 @@ namespace GymSystem.API.Controllers
         }
 
         #endregion
+
+
+
     }
 }

@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace GymSystem.API.Controllers
 {
-   
+
     public class MealController : BaseApiController
     {
         private readonly IMealRepo _mealRepo;

@@ -4,11 +4,10 @@ using GymSystem.BLL.Dtos.NutritionPlan;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.NutritionPlanSpec;
 using GymSystem.DAL.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Repositories.Business
@@ -20,17 +19,15 @@ namespace GymSystem.BLL.Repositories.Business
 
         public NutritionPlanRepo(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<ApiResponse> CreateNutritionPlan(NutritionPlanDto nutritionPlanDto)
         {
-            // Build a specification to check if the Nutrition Plan already exists
-            var spec = new BaseSpecification<NutritionPlan>(x => x.PlanName == nutritionPlanDto.PlanName && !x.IsDeleted);
+            var spec = new NutritionPlanByNameSpecification(nutritionPlanDto.PlanName);
 
-            // Use the specification to get the Nutrition Plan
-            var existingNutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetByIdWithSpecAsync(spec);
+            var existingNutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetEntityWithSpecAsync(spec);
 
             if (existingNutritionPlan != null)
             {
@@ -52,11 +49,9 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<ApiResponse> DeleteNutritionPlan(int nutritionPlanId)
         {
-            // Build a specification to find the Nutrition Plan by ID and ensure it's not deleted
-            var spec = new BaseSpecification<NutritionPlan>(x => x.Id == nutritionPlanId && !x.IsDeleted);
+            var spec = new NutritionPlanByIdSpecification(nutritionPlanId);
 
-            // Use the specification to get the Nutrition Plan
-            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetByIdWithSpecAsync(spec);
+            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetEntityWithSpecAsync(spec);
 
             if (nutritionPlan == null || nutritionPlan.IsDeleted)
             {
@@ -65,7 +60,6 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                // Mark the Nutrition Plan as deleted
                 nutritionPlan.IsDeleted = true;
                 _unitOfWork.Repository<NutritionPlan>().Update(nutritionPlan);
                 await _unitOfWork.Complete();
@@ -80,24 +74,21 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<NutritionPlanDto> GetNutritionPlan(int nutritionPlanId)
         {
-            // Build a specification to find the Nutrition Plan by ID and ensure it's not deleted
-            var spec = new BaseSpecification<NutritionPlan>(x => x.Id == nutritionPlanId && !x.IsDeleted);
+            var spec = new NutritionPlanByIdSpecification(nutritionPlanId);
 
-            // Use the specification to get the Nutrition Plan
-            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetByIdWithSpecAsync(spec);
+            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetEntityWithSpecAsync(spec);
 
             if (nutritionPlan == null || nutritionPlan.IsDeleted)
             {
                 return null;
             }
 
-            // Map Entity to DTO and return
             return _mapper.Map<NutritionPlanDto>(nutritionPlan);
         }
 
         public async Task<IEnumerable<NutritionPlanDto>> GetNutritionPlans()
         {
-            var spec = new BaseSpecification<NutritionPlan>(x => !x.IsDeleted);
+            var spec = new AllNutritionPlansSpecification();
 
             var nutritionPlans = await _unitOfWork.Repository<NutritionPlan>().GetAllWithSpecAsync(spec);
 
@@ -106,9 +97,9 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<ApiResponse> UpdateNutritionPlan(int nutritionPlanId, NutritionPlanDto nutritionPlanDto)
         {
-            var spec = new BaseSpecification<NutritionPlan>(x => x.Id == nutritionPlanId);
+            var spec = new NutritionPlanByIdWithoutDeletedCheckSpecification(nutritionPlanId);
 
-            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetByIdWithSpecAsync(spec);
+            var nutritionPlan = await _unitOfWork.Repository<NutritionPlan>().GetEntityWithSpecAsync(spec);
 
             if (nutritionPlan == null)
             {
@@ -131,8 +122,5 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiResponse(500, "Error: " + ex.Message);
             }
         }
-
-
     }
-
 }

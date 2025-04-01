@@ -11,6 +11,6 @@ namespace GymSystem.BLL.Dtos.User
     {
         [Required(ErrorMessage = "Fitness level is required")]
         public string FitnessLevel { get; set; } // "Beginner", "Intermediate", "Advanced"
-    }   
+    }
 
 }

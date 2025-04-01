@@ -23,23 +23,24 @@ namespace GymSystem.DAL.Identity
                 UserName = "MohamedSalahadmin",
                 Email = "mohamedbedosalah2003@gmail.com",
                 PhoneNumber = "01093422099",
+                Gender = "Male",
+                Age = 22,
                 EmailConfirmed = true,
-				Address = new Address
-				{
-					FristName = "Mohamed",
-					LastName = "salah",
-					Country = "Egypt",
-					City = "Menouf",
-					Street = "Tarek Barhim"
-				},
+                IsProfileConfirmed = true,
+                Address = new Address
+                {
+                    Country = "Egypt",
+                    City = "Menouf",
+                    Street = "Tarek Barhim"
+                },
 
-				UserCode = GenerateUserCode("Admin", 1)
+                UserCode = GenerateUserCode("Admin", 1)
             };
 
             const string adminPassword = "Pa$$w0rd123!";
             const string adminRole = "Admin";
 
-
+            // التحقق من عدم وجود المستخدم مسبقًا
             if (await userManager.FindByEmailAsync(adminUser.Email) == null)
             {
                 var createResult = await userManager.CreateAsync(adminUser, adminPassword);
@@ -59,15 +60,15 @@ namespace GymSystem.DAL.Identity
             }
         }
 
-       
+
         private static string GenerateUserCode(string role, int userCount)
         {
             return $"{role.Substring(0, 2).ToUpper()}-{DateTime.UtcNow.ToString("yyMMdd")}-{userCount}";
         }
 
 
-		
 
 
-	}
+
+    }
 }

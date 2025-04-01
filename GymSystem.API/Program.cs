@@ -1,5 +1,6 @@
 ﻿using GymSystem.API.Extentions;
 using GymSystem.API.MiddleWares;
+using GymSystem.BLL.Repositories.Business;
 using GymSystem.DAL.Data;
 using GymSystem.DAL.Entities.Identity;
 using GymSystem.DAL.Identity;
@@ -23,16 +24,12 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Allow Dependency Injection for StoreContext
-//builder.Services.AddDbContext<GymSystemContext>(options =>
-//{
-//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-//});
 
-builder.Services.AddDbContext<AppIdentityDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
-});
+// Add DbContext with respect to the SoftDeleteInterceptor
+builder.Services.AddDbContext<AppIdentityDbContext>(
+    (serviceProvider, options) => options
+    .UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"))
+    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
 // Allow Dependency Injection for Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
@@ -59,15 +56,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("MyPolicy", policy =>
     {
-        // Allow all origins, headers, and methods during development
         policy.AllowAnyHeader()
               .AllowAnyMethod()
               .AllowAnyOrigin();
-
-        // Uncomment the line below to restrict access to specific origins
-        // policy.WithOrigins("https://example.com")
-        //       .AllowAnyHeader()
-        //       .AllowAnyMethod();
     });
 });
 
@@ -99,14 +90,8 @@ var loggerFactory = services.GetRequiredService<ILoggerFactory>();
 
 try
 {
-
-    //var context = services.GetRequiredService<GymSystemContext>();
-    //await context.Database.MigrateAsync();
-
     var identityContext = services.GetRequiredService<AppIdentityDbContext>();
     await identityContext.Database.MigrateAsync();
-
-
 
 	var userManager = services.GetRequiredService<UserManager<AppUser>>();
     await AppIdentityDbContextSeed.SeedAsync(userManager);

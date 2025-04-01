@@ -10,5 +10,8 @@ namespace GymSystem.BLL.Interfaces.Business
     public interface IUserRepository
     {
         Task<AppUser> GetUserByCodeAsync(string userCode);
+        Task<AppUser> GetUserByIdAsync(string userId);
+
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
+using GymSystem.BLL.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,6 @@ namespace GymSystem.BLL.Interfaces.Business
 
         Task<List<RepairDto>> GetRepairsByEquipmentIdAsync(int id);
 
-        Task<ApiResponse> CreateAsync(RepairDto RepairDto, string currentUserId);
+        Task<ApiResponse> CreateAsync(RepairDto RepairDto);
     }
 }

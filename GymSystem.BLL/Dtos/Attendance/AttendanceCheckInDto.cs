@@ -9,7 +9,7 @@ namespace GymSystem.BLL.Dtos.Attendance
 {
     public class AttendanceCheckInDto
     {
-        [Required(ErrorMessage = "User ID is required.")]
-        public string UserId { get; set; }
+        [Required(ErrorMessage = "User Code is required.")]
+        public string UserCode { get; set; }
     }
 }

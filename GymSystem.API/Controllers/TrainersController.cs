@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-   
-    [Authorize(Roles = "Admin")] 
+
+    [Authorize(Roles = "Admin")] // Only Admin can manage trainers
     public class TrainersController : BaseApiController
     {
         private readonly ITrainerService _trainerService;
@@ -82,17 +82,19 @@ namespace GymSystem.API.Controllers
             return new ApiResponse(204, "Trainer deleted successfully");
         }
 
-        [HttpPost("{id}/suspend")]
+        [HttpPost("suspend/{id}")]
         public async Task<IActionResult> SuspendTrainer(string id)
         {
             var result = await _trainerService.SuspendTrainerAsync(id);
 
-            if (!result)
-            {
-                return BadRequest(new ApiResponse(400, "Failed to suspend trainer."));
-            }
 
-            return Ok(new ApiResponse(200, "Trainer suspended successfully."));
+            return result.StatusCode switch
+            {
+                200 => Ok(result),
+                400 => BadRequest(result),
+                404 => NotFound(result),
+                _ => StatusCode(500, result)
+            };
         }
     }
 }

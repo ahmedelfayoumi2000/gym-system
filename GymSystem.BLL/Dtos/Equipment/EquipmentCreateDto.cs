@@ -10,10 +10,11 @@ namespace GymSystem.BLL.Dtos.Equipment
 
         public string Description { get; set; }
 
+        [Range(2, int.MaxValue, ErrorMessage = "Count must be greater than 1 if provided.")]
+        public int? Count { get; set; }
+
         [Required(ErrorMessage = "Availability status is required.")]
         public bool IsAvailable { get; set; }
-
-        [Required(ErrorMessage = "Last maintenance date is required.")]
-        public DateTime LastMaintenanceDate { get; set; }
+        public DateTime? LastMaintenanceDate { get; set; }
     }
 }

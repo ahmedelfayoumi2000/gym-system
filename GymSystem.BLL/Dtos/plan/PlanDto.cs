@@ -2,11 +2,11 @@
 
 namespace GymSystem.BLL.Dtos.plan
 {
-  
+
     public class PlanDto
     {
         public int Id { get; set; }
-       
+
         [Required(ErrorMessage = "Plan name is required.")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Plan name must be between 2 and 100 characters.")]
         public string PlanName { get; set; }

@@ -4,6 +4,7 @@ using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.OfferSpec;
 using GymSystem.DAL.Entities;
 using Microsoft.Extensions.Logging;
 using System;
@@ -45,6 +46,13 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(404, $"Plan with ID {offerDto.PlanId} not found.");
                 }
 
+                // التأكد من إن Price مش null
+                if (plan.Price == null)
+                {
+                    _logger.LogWarning("Plan with ID {PlanId} has a null Price.", offerDto.PlanId);
+                    return new ApiResponse(400, "Plan price cannot be null.");
+                }
+
                 if (offerDto.DiscountedPrice >= plan.Price)
                 {
                     _logger.LogWarning("Discounted price {DiscountedPrice} is not less than original price {OriginalPrice} for Plan ID {PlanId}.",
@@ -59,12 +67,8 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(400, "Start date must be before end date and not in the past.");
                 }
 
-                // التحقق من ان فيه عرض  ساري على نفس الخطة
-                var activeOfferSpec = new BaseSpecification<Offer>(o =>
-                    o.PlanId == offerDto.PlanId &&
-                    o.IsActive &&
-                    o.StartDate <= DateTime.UtcNow &&
-                    o.EndDate >= DateTime.UtcNow);
+                // التحقق من ان فيه عرض ساري على نفس الخطة
+                var activeOfferSpec = new ActiveOfferByPlanIdSpecification(offerDto.PlanId);
                 var existingOffer = await _unitOfWork.Repository<Offer>().GetEntityWithSpecAsync(activeOfferSpec);
                 if (existingOffer != null)
                 {
@@ -75,6 +79,14 @@ namespace GymSystem.BLL.Repositories.Business
 
                 var offerEntity = _mapper.Map<Offer>(offerDto);
                 await _unitOfWork.Repository<Offer>().Add(offerEntity);
+
+                // تحديث الـ Plan
+                plan.HasOffer = true;
+                plan.DiscountedPrice = offerEntity.DiscountedPrice;
+                plan.ExpireDate = offerEntity.EndDate;
+
+                _unitOfWork.Repository<Plan>().Update(plan);
+
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
@@ -83,7 +95,7 @@ namespace GymSystem.BLL.Repositories.Business
                 }
 
                 var createdDto = _mapper.Map<OfferViewDto>(offerEntity);
-                createdDto.PlanName = plan.PlanName;
+                createdDto.PlanName = plan.PlanName ?? "Unknown Plan";
                 createdDto.OriginalPrice = plan.Price;
                 _logger.LogInformation("Offer for Plan ID {PlanId} added successfully with ID {Id}.", offerDto.PlanId, offerEntity.Id);
                 return new ApiResponse(201, "Offer added successfully", createdDto);
@@ -94,7 +106,8 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiExceptionResponse(500, $"Failed to add offer: {ex.Message}");
             }
         }
-        public async Task<ApiResponse> UpdateOffer(int id, OfferDto offerDto)
+
+        public async Task<ApiResponse> UpdateOffer(int id, UpdateOffer offerDto)
         {
             if (offerDto == null)
             {
@@ -107,49 +120,42 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
                 var existingOffer = await _unitOfWork.Repository<Offer>().GetByIdAsync(id);
-                if (existingOffer == null || !existingOffer.IsActive)
+                if (existingOffer == null /*|| !existingOffer.IsActive*/)
                 {
                     _logger.LogWarning("Offer with ID {Id} not found or already deleted.", id);
                     return new ApiResponse(404, $"Offer with ID {id} not found or already deleted.");
                 }
 
-                var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync(offerDto.PlanId);
+                var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync((int)existingOffer.PlanId);
                 if (plan == null)
                 {
-                    _logger.LogWarning("Plan with ID {PlanId} not found for offer ID {Id}.", offerDto.PlanId, id);
-                    return new ApiResponse(404, $"Plan with ID {offerDto.PlanId} not found.");
+                    _logger.LogWarning("Plan with ID {PlanId} not found for offer ID {Id}.", existingOffer.PlanId, id);
+                    return new ApiResponse(404, $"Plan with ID {existingOffer.PlanId} not found.");
                 }
 
                 if (offerDto.DiscountedPrice >= plan.Price)
                 {
                     _logger.LogWarning("Discounted price {DiscountedPrice} is not less than original price {OriginalPrice} for Plan ID {PlanId}.",
-                        offerDto.DiscountedPrice, plan.Price, offerDto.PlanId);
+                        offerDto.DiscountedPrice, plan.Price, existingOffer.PlanId);
                     return new ApiResponse(400, "Discounted price must be less than the original price.");
                 }
 
                 if (!IsValidDateRange(offerDto.StartDate, offerDto.EndDate))
                 {
                     _logger.LogWarning("Invalid date range for offer on Plan ID {PlanId}. Start: {StartDate}, End: {EndDate}",
-                        offerDto.PlanId, offerDto.StartDate, offerDto.EndDate);
+                        existingOffer.PlanId, offerDto.StartDate, offerDto.EndDate);
                     return new ApiResponse(400, "Start date must be before end date and not in the past.");
                 }
 
-                var overlappingOfferSpec = new BaseSpecification<Offer>(o =>
-                    o.Id != id &&
-                    o.PlanId == offerDto.PlanId &&
-                    o.IsActive &&
-                    o.StartDate <= offerDto.EndDate &&
-                    o.EndDate >= offerDto.StartDate);
-                var overlappingOffer = await _unitOfWork.Repository<Offer>().GetEntityWithSpecAsync(overlappingOfferSpec);
-                if (overlappingOffer != null)
-                {
-                    _logger.LogWarning("Updated offer overlaps with existing offer on Plan ID {PlanId}. Existing offer ID: {OfferId}, valid until: {EndDate}.",
-                        offerDto.PlanId, overlappingOffer.Id, overlappingOffer.EndDate);
-                    return new ApiResponse(409, $"لا يمكن تعديل العرض، هناك عرض آخر ساري على هذه الخطة حتى تاريخ {overlappingOffer.EndDate:yyyy-MM-dd}.");
-                }
-
                 _mapper.Map(offerDto, existingOffer);
+
                 _unitOfWork.Repository<Offer>().Update(existingOffer);
+
+                plan.HasOffer = true;
+                plan.DiscountedPrice = existingOffer.DiscountedPrice;
+                plan.ExpireDate = existingOffer.EndDate;
+                _unitOfWork.Repository<Plan>().Update(plan);
+
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
@@ -177,14 +183,22 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
                 var offerEntity = await _unitOfWork.Repository<Offer>().GetByIdAsync(id);
-                if (offerEntity == null || !offerEntity.IsActive)
+                if (offerEntity == null
+
+ || !offerEntity.IsActive)
                 {
                     _logger.LogWarning("Offer with ID {Id} not found or already deleted.", id);
                     return new ApiResponse(404, $"Offer with ID {id} not found or already deleted.");
                 }
+                var plan = await _unitOfWork.Repository<Plan>().GetByIdAsync((int)offerEntity.PlanId);
 
-                offerEntity.IsActive = false;
-                _unitOfWork.Repository<Offer>().Update(offerEntity);
+                plan.HasOffer = false;
+                plan.DiscountedPrice = null;
+                plan.ExpireDate = null;
+
+                _unitOfWork.Repository<Offer>().Delete(offerEntity);
+                _unitOfWork.Repository<Plan>().Update(plan);
+
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
@@ -208,8 +222,7 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                var spec = new BaseSpecification<Offer>(o => o.Id == id && o.IsActive);
-                spec.AddIncludes(o => o.Plan);
+                var spec = new OfferByIdSpecification(id);
                 var offerEntity = await _unitOfWork.Repository<Offer>().GetEntityWithSpecAsync(spec);
                 if (offerEntity == null)
                 {
@@ -236,8 +249,7 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                var spec = new BaseSpecification<Offer>(o => o.IsActive);
-                spec.AddIncludes(o => o.Plan);
+                var spec = new AllActiveOffersSpecification();
                 var offers = await _unitOfWork.Repository<Offer>().GetAllWithSpecAsync(spec);
                 var offerDtos = _mapper.Map<IEnumerable<OfferViewDto>>(offers);
 
@@ -266,7 +278,11 @@ namespace GymSystem.BLL.Repositories.Business
 
         private bool IsValidDateRange(DateTime startDate, DateTime endDate)
         {
-            return startDate < endDate && startDate >= DateTime.UtcNow;
+            var startDateOnly = startDate.Date;
+            var endDateOnly = endDate.Date;
+            var currentDate = DateTime.UtcNow.Date;
+
+            return startDateOnly < endDateOnly && startDateOnly >= currentDate;
         }
     }
 }

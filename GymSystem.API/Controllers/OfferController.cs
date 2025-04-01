@@ -107,7 +107,7 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateOffer(int id, [FromBody] OfferDto offerDto)
+        public async Task<IActionResult> UpdateOffer(int id, [FromBody] UpdateOffer offerDto)
         {
             if (!IsValidId(id))
             {

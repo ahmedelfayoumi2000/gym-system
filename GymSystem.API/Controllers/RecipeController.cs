@@ -40,7 +40,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-     
+
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,6 +67,30 @@ namespace GymSystem.API.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, $"An error occurred while retrieving recipe with ID {id}", ex.Message));
+            }
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AddRecipe([FromBody] RecipeDto recipeDto)
+        {
+            if (recipeDto == null)
+            {
+                return BadRequest(new ApiResponse(400, "Recipe data cannot be null"));
+            }
+
+            try
+            {
+                // هنا هتضيف دالة AddRecipeAsync في الـ Repo
+                var addedRecipe = await _recipeRepo.AddRecipeAsync(recipeDto);
+                return HandleApiResponse(new ApiResponse(201, "Recipe added successfully", addedRecipe), StatusCodes.Status201Created);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while adding recipe", ex.Message));
             }
         }
 

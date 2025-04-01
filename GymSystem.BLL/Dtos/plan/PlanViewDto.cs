@@ -7,6 +7,8 @@
         public decimal Price { get; set; }
         public int DurationInDays { get; set; }
         public bool HasOffer { get; set; } //فيه عرض ساري علي الخطة؟
-        public decimal? DiscountedPrice { get; set; } 
+        public decimal? DiscountedPrice { get; set; }
+        public DateTime? ExpireDate { get; set; }
+
     }
 }

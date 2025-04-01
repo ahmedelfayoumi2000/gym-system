@@ -9,16 +9,15 @@ namespace GymSystem.DAL.Entities
 {
     public class Order : BaseEntity
     {
-        public int ProductId { get; set; } 
+        public int ProductId { get; set; }
         public Product Product { get; set; }
         public string ProductName { get; set; }
-        public decimal Price { get; set; }
         public decimal Total { get; set; }
         public int Count { get; set; }
         public bool IsAvailable { get; set; }
         public bool IsDeleted { get; set; }
         public string? CreatedByUserId { get; set; }
         public AppUser? CreatedByUser { get; set; }
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

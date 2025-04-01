@@ -12,7 +12,7 @@ using GymSystem.API.Controllers;
 
 namespace GymMangamentSystem.Apis.Controllers
 {
-   
+
     [Authorize(Roles = "Admin")]
     public class RoleController : BaseApiController
     {
@@ -20,7 +20,7 @@ namespace GymMangamentSystem.Apis.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly ILogger<RoleController> _logger;
 
-      
+
         public RoleController(
             RoleManager<IdentityRole> roleManager,
             UserManager<AppUser> userManager,
@@ -31,7 +31,7 @@ namespace GymMangamentSystem.Apis.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-      
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -105,7 +105,7 @@ namespace GymMangamentSystem.Apis.Controllers
             }
         }
 
-        
+
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -214,6 +214,6 @@ namespace GymMangamentSystem.Apis.Controllers
             return StatusCode(500, new ApiExceptionResponse(500, "An unexpected error occurred", ex.Message));
         }
 
-      
+
     }
 }

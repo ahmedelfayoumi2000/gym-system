@@ -1,5 +1,6 @@
 ﻿using GymSystem.API.DTOs.Trainer;
 using GymSystem.BLL.Dtos.Trainer;
+using GymSystem.BLL.Errors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,6 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<TrainerDto> CreateTrainerAsync(CreateTrainerDto trainerDto);
         Task<bool> UpdateTrainerAsync(string id, UpdateTrainerDto trainerDto);
         Task<bool> DeleteTrainerAsync(string id);
-        Task<bool> SuspendTrainerAsync(string id);
+        Task<ApiResponse> SuspendTrainerAsync(string id);
     }
 }

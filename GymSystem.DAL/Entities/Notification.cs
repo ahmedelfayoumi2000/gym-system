@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DAL.Entities
 {
-    public class Notification :BaseEntity
+    public class Notification : BaseEntity
     {
-        //public int NotificationId { get; set; }
         public string Message { get; set; }
         public bool IsRead { get; set; }
         public DateTime Date { get; set; }

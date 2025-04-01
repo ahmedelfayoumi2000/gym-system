@@ -1,5 +1,6 @@
 ﻿using GymSystem.BLL.Specifications;
 using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,12 +16,15 @@ namespace GymSystem.BLL.Interfaces
 
         Task<T> GetByIdWithSpecAsync(ISpecification<T> spec);
         Task<IReadOnlyList<T>> GetAllWithSpecAsync(ISpecification<T> spec);
-        Task<T> GetEntityWithSpecAsync(ISpecification<T> spec);
+
         Task<int> GetCountAsync(ISpecification<T> spec);
-        Task<List<T>> GetRepairByEquipmentIdAsync(int equipmentId);
         Task<T> GetByEmailAsync<T>(string email) where T : class;
+
+        Task<List<T>> GetRepairByEquipmentIdAsync(int equipmentId);
+        Task<T> GetEntityWithSpecAsync(ISpecification<T> spec);
         Task Add(T entity);
         void Update(T entity);
+        void UpdateRange(IEnumerable<T> entities);
         void Delete(T entity);
     }
 }

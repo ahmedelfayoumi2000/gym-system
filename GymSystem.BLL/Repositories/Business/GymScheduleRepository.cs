@@ -4,9 +4,9 @@ using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.GymScheduleSpec;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Enums.Business;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,12 +38,7 @@ namespace GymSystem.BLL.Repositories.Business
                 }
 
                 // بنتأكد ان مفيش تداخل مع مواعيد تانية ف نفس اليوم
-                var overlappingSpec = new BaseSpecification<GymSchedule>(s =>
-                    s.DayOfWeek == scheduleDto.DayOfWeek &&
-                    s.IsActive &&
-                    ((scheduleDto.StartTime >= s.StartTime && scheduleDto.StartTime < s.EndTime) ||
-                     (scheduleDto.EndTime > s.StartTime && scheduleDto.EndTime <= s.EndTime) ||
-                     (scheduleDto.StartTime <= s.StartTime && scheduleDto.EndTime >= s.EndTime)));
+                var overlappingSpec = new OverlappingScheduleSpecification(scheduleDto.DayOfWeek, scheduleDto.StartTime, scheduleDto.EndTime);
                 var overlappingSchedule = await _unitOfWork.Repository<GymSchedule>().GetEntityWithSpecAsync(overlappingSpec);
                 if (overlappingSchedule != null)
                 {
@@ -82,13 +77,7 @@ namespace GymSystem.BLL.Repositories.Business
                 }
 
                 // بنتأكد ان مفيش تداخل مع مواعيد تانية ف نفس اليوم بثتثناء الجدول الحالي
-                var overlappingSpec = new BaseSpecification<GymSchedule>(s =>
-                    s.Id != id &&
-                    s.DayOfWeek == scheduleDto.DayOfWeek &&
-                    s.IsActive &&
-                    ((scheduleDto.StartTime >= s.StartTime && scheduleDto.StartTime < s.EndTime) ||
-                     (scheduleDto.EndTime > s.StartTime && scheduleDto.EndTime <= s.EndTime) ||
-                     (scheduleDto.StartTime <= s.StartTime && scheduleDto.EndTime >= s.EndTime)));
+                var overlappingSpec = new OverlappingScheduleExcludingIdSpecification(id, scheduleDto.DayOfWeek, scheduleDto.StartTime, scheduleDto.EndTime);
                 var overlappingSchedule = await _unitOfWork.Repository<GymSchedule>().GetEntityWithSpecAsync(overlappingSpec);
                 if (overlappingSchedule != null)
                 {
@@ -142,7 +131,7 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                var spec = new BaseSpecification<GymSchedule>(s => s.Id == id && s.IsActive);
+                var spec = new GymScheduleByIdSpecification(id);
                 var scheduleEntity = await _unitOfWork.Repository<GymSchedule>().GetEntityWithSpecAsync(spec);
                 if (scheduleEntity == null)
                 {
@@ -162,7 +151,7 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                var spec = new BaseSpecification<GymSchedule>(s => s.IsActive);
+                var spec = new AllActiveGymSchedulesSpecification();
                 var schedules = await _unitOfWork.Repository<GymSchedule>().GetAllWithSpecAsync(spec);
                 var scheduleDtos = _mapper.Map<IEnumerable<GymScheduleViewDto>>(schedules);
 
@@ -188,7 +177,7 @@ namespace GymSystem.BLL.Repositories.Business
 
             try
             {
-                var spec = new BaseSpecification<GymSchedule>(s => s.DayOfWeek == parsedDay && s.IsActive);
+                var spec = new GymSchedulesByDaySpecification(parsedDay);
                 var schedules = await _unitOfWork.Repository<GymSchedule>().GetAllWithSpecAsync(spec);
                 var scheduleDtos = _mapper.Map<IEnumerable<GymScheduleViewDto>>(schedules);
 

@@ -17,9 +17,7 @@ namespace GymSystem.DAL.Entities
         public IFormFile Image { get; set; }
         public int Repetitions { get; set; }
         public int Sets { get; set; }
-
-        public int ExpectedCalories { get; set; }
-        public int RestTimeSeconds { get; set; }
+        public int DurationMinutes { get; set; } // الوقت الكلي للتمرين
         public bool IsDeleted { get; set; }
         public int? WorkoutPlanId { get; set; }
         public WorkoutPlan? WorkoutPlan { get; set; }

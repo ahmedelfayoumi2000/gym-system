@@ -13,6 +13,6 @@ namespace GymSystem.BLL.Dtos.Role
         public string UserId { get; set; }
 
         [Required(ErrorMessage = "Roles are required.")]
-        public List<RoleDTO> Roles { get; set; }
+        public List<RoleDTO> Roles { get; set; } = new List<RoleDTO>();
     }
 }

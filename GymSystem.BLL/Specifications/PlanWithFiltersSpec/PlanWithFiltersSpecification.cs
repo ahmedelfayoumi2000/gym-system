@@ -1,41 +1,37 @@
-﻿using GymSystem.BLL.Specifications;
-using GymSystem.DAL.Entities;
-using Microsoft.IdentityModel.Tokens;
+﻿using GymSystem.DAL.Entities;
 
-public class PlanWithFiltersSpecification : BaseSpecification<Plan>
+namespace GymSystem.BLL.Specifications
 {
-    public PlanWithFiltersSpecification(SpecPrams specParams) : base()
+    public class PlanWithFiltersSpecification : BaseSpecification<Plan>
     {
-        if (!string.IsNullOrEmpty(specParams.Search))
+        public PlanWithFiltersSpecification(SpecPrams specParams)
+            : base()
         {
-            Criteria = p => p.PlanName.ToLower().Contains(specParams.Search.ToLower());
-        }
+            ApplySearchFilter(specParams, p => p.PlanName);
 
-        if (!string.IsNullOrEmpty(specParams.Sort))
-        {
-            switch (specParams.Sort.ToLower())
+            if (!string.IsNullOrEmpty(specParams.Sort))
             {
-                case "price":
-                    AddOrderBy(p => p.Price);
-                    break;
-                case "pricedesc":
-                    AddOrderByDescending(p => p.Price);
-                    break;
-                case "duration":
-                    AddOrderBy(p => p.DurationDays);
-                    break;
-                case "durationdesc":
-                    AddOrderByDescending(p => p.DurationDays);
-                    break;
-                default:
-                    AddOrderBy(p => p.Id);
-                    break;
+                switch (specParams.Sort.ToLower())
+                {
+                    case "price":
+                        AddOrderBy(p => p.Price);
+                        break;
+                    case "pricedesc":
+                        AddOrderByDescending(p => p.Price);
+                        break;
+                    case "duration":
+                        AddOrderBy(p => p.DurationDays);
+                        break;
+                    case "durationdesc":
+                        AddOrderByDescending(p => p.DurationDays);
+                        break;
+                    default:
+                        AddOrderBy(p => p.Id);
+                        break;
+                }
             }
-        }
 
-        if (specParams.PageSize > 0)
-        {
-            ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
+            ApplyPagination(specParams);
         }
     }
 }

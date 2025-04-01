@@ -3,12 +3,7 @@ using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Dtos.User;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Specifications;
-using GymSystem.DAL.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Interfaces.Business
@@ -24,6 +19,8 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync();
         Task<ApiResponse> RenewMembershipAsync(MonthlyMembershipRenewDto renewDto);
         Task<ApiResponse> StopMembershipAsync(StopMembershipDto stopMembershipDto, string currentUserId);
+
+        //Mopile
         Task<UserProfileDto> GetUserProfileAsync(string userId);
         Task<ApiResponse> UpdateProfileAsync(string userId, UpdateProfileDto profileDto);
         Task<ApiResponse> UpdateGoalAsync(string userId, UpdateGoalDto goalDto);

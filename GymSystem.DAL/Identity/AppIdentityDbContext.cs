@@ -28,7 +28,7 @@ namespace GymSystem.DAL.Identity
             );
         }
 
-        public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<Attendance> Attendance { get; set; }
         public DbSet<Class> Classes { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<ExerciseCategory> ExerciseCategories { get; set; }
@@ -36,25 +36,20 @@ namespace GymSystem.DAL.Identity
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<BMIRecord> bMIRecords { get; set; }
         public DbSet<Meal> Meals { get; set; }
-        public DbSet<Membership> Memberships { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NutritionPlan> NutritionPlans { get; set; }
         public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
-   
+
         public DbSet<Equipment> Equipments { get; set; }
-        public DbSet<MonthlyMembership> monthlyMemberships { get; set; }
-        public DbSet<DailyAttendance> dailyAttendances { get; set; }
+        public DbSet<Membership> Membershipp { get; set; }
         public DbSet<Plan> Plans { get; set; }
-
-        public DbSet<EquipmentMaintenance> EquipmentMaintenances { get; set; }
-        public DbSet<ClassEquipment> ClassEquipments { get; set; }
-        public DbSet<Product> products { get; set; }
+        public DbSet<Repair> Repairs { get; set; }
+        public DbSet<Product> Product { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Recipe> recipes { get; set; }
-        public DbSet<Repair> repairs { get; set; }
         public DbSet<FinancialTransaction> financialTransactions { get; set; }
+        public DbSet<Recipe> recipes { get; set; }
+        public DbSet<Offer> Offers { get; set; }
+        public DbSet<UserFavoriteExercise> UserFavoriteExercises { get; set; }
         public DbSet<GymSchedule> gymSchedules { get; set; }
-        public DbSet<Offer> offers { get; set; }
-
     }
 }

@@ -15,5 +15,6 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> DeleteWorkoutPlan(int workoutPlanId);
         Task<WorkoutPlanDto> GetWorkoutPlan(int workoutPlanId);
         Task<IEnumerable<WorkoutPlanDto>> GetWorkoutPlans();
+        Task<IEnumerable<WorkoutPlanDto>> GetWorkoutPlansByDay(DayOfWeek dayOfWeek);
     }
 }

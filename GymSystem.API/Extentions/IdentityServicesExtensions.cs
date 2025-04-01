@@ -1,11 +1,14 @@
 ﻿using GymMangamentSystem.Reposatory.Services.Auth;
+using GymSystem.API.Helpers;
 using GymSystem.BLL.Interfaces.Auth;
+using GymSystem.BLL.Repositories.Business;
 using GymSystem.BLL.Services.Auth;
 using GymSystem.DAL.Entities.Identity;
 using GymSystem.DAL.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 using System.Text.Json;
 
@@ -64,9 +67,26 @@ namespace GymSystem.API.Extentions
                 };
             });
             services.Configure<MailSettings>(configuration.GetSection(nameof(MailSettings)));
+
+            services.AddSingleton<SoftDeleteInterceptor>();
+
+           
+          
+
+
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySetting"));
+
+            services.AddSingleton(cloudinary =>
+            {
+                var config = configuration.GetSection("CloudinarySetting").Get<CloudinarySettings>();
+                var account = new CloudinaryDotNet.Account(config.CloudName, config.ApiKey, config.ApiSecret);
+                return new CloudinaryDotNet.Cloudinary(account);
+            });
+
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IOtpService, OtpService>();
             services.AddScoped<ITokenService, TokenService>();
+
             services.AddSingleton<ActiveUserManager>();
             services.AddScoped<UserManager<AppUser>>();
             services.AddMemoryCache();

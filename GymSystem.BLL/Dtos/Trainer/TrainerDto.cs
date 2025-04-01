@@ -20,7 +20,8 @@ namespace GymSystem.BLL.Dtos.Trainer
         //      public DateTime EndDate { get; set; }
         public bool IsStopped { get; set; }
         //public int HaveDays { get; set; }
-        public string? AddBy { get; set; }
+        //public string? AddBy { get; set; }
         public decimal Salary { get; set; }
+
     }
 }

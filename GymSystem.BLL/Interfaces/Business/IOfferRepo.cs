@@ -8,7 +8,7 @@ namespace GymSystem.BLL.Interfaces.Business
     public interface IOfferRepo
     {
         Task<ApiResponse> AddOffer(OfferDto offerDto);
-        Task<ApiResponse> UpdateOffer(int id, OfferDto offerDto);
+        Task<ApiResponse> UpdateOffer(int id, UpdateOffer offerDto);
         Task<ApiResponse> DeleteOffer(int id);
         Task<ApiResponse> GetOffer(int id);
         Task<ApiResponse> GetOffers();

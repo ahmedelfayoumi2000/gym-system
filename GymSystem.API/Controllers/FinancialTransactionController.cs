@@ -7,7 +7,7 @@ using System.Security;
 using System.Security.Claims;
 namespace GymSystem.API.Controllers
 {
-    [Authorize] 
+    [Authorize]
     public class FinancialTransactionController : BaseApiController
     {
         private readonly IFinancialTransactionService _financialTransactionService;
@@ -39,7 +39,7 @@ namespace GymSystem.API.Controllers
                 }
 
                 var response = await _financialTransactionService.CloseDrawerAsync(requestDto, currentUserId);
-              
+
                 return Ok(response);
             }
             catch (ArgumentException ex)

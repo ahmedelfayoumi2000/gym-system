@@ -1,24 +1,13 @@
 ﻿using GymSystem.DAL.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Specifications.EquipmentSpec
 {
     public class EquipmentWithFiltersSpecification : BaseSpecification<Equipment>
     {
-        public EquipmentWithFiltersSpecification(SpecPrams specParams) : base()
+        public EquipmentWithFiltersSpecification(SpecPrams specParams)
+            : base(e => !e.IsDeleted)
         {
-            if (!string.IsNullOrEmpty(specParams.Search))
-            {
-                Criteria = e => e.EquipmentName.ToLower().Contains(specParams.Search.ToLower()) && !e.IsDeleted;
-            }
-            else
-            {
-                Criteria = e => !e.IsDeleted;
-            }
+            ApplySearchFilter(specParams, e => e.EquipmentName);
 
             if (!string.IsNullOrEmpty(specParams.Sort))
             {
@@ -42,12 +31,7 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
                 }
             }
 
-            if (specParams.PageSize > 0)
-            {
-                ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
-            }
+            ApplyPagination(specParams);
         }
-
     }
 }
-

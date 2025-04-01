@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using GymSystem.BLL.Repositories.Business;
 using GymSystem.BLL.Repositories;
-using MailKit;
 
 namespace GymSystem.API.Extentions
 {
@@ -54,19 +53,33 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IClassRepo, ClassRepository>();
             services.AddScoped<IMealsCategoryRepo, MealsCategoryRepository>();
             services.AddScoped<IMealRepo, MealRepository>();
-            services.AddScoped<IMembershipRepo, MembershipRepository>();
             services.AddScoped<IEquipmentRepo, EquipmentRepo>();
+            services.AddScoped<IRepairEquipmentRepo, RepairEquipmentRepo>();
             services.AddScoped<IDailyAttendanceRepo, DailyAttendanceRepo>();
-            services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<IMembershipRepo, MembershipRepository>();
+            services.AddScoped<IPlanRepo, PlanRepo>();
             services.AddScoped<IProductRepo, ProductRepo>();
+            services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<IFinancialTransactionService, FinancialTransactionRepository>();
+            services.AddScoped<IUserCodeGenerator, UserCodeGenerator>();
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRecipeRepo, RecipeRepo>();
             services.AddScoped<IExerciseRepo, ExerciseRepo>();
-            services.AddScoped<IFinancialTransactionService, FinancialTransactionRepository>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IUserCodeGenerator, UserCodeGenerator>();
-            services.AddScoped<IRepairEquipmentRepo, RepairEquipmentRepo>();
-            services.AddScoped<IPlanRepo, PlanRepo>();
+            services.AddScoped<IOfferRepo, OfferRepository>();
+            services.AddScoped<IImageService, ImageService>();
+            services.AddScoped<IExerciseCategoryRepo, ExerciseCategoryRepo>();
             services.AddScoped<IGymScheduleRepo, GymScheduleRepository>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+
+            services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
+            services.AddScoped<IWorkoutPlanRepo, WorkoutPlanRepo>();
+            services.AddScoped<IExerciseRepo, ExerciseRepo>();
+            //services.AddScoped<INotificationRepo, NotificationRepo>();
+
+
+
+
+
             return services;
         }
 

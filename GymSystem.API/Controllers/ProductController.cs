@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-   
-    //[Authorize(Roles = "Admin,Receptionist")]
+
+    [Authorize(Roles = "Admin,Receptionist")]
     public class ProductController : BaseApiController
     {
         private readonly IProductRepo _productRepo;
@@ -21,7 +21,7 @@ namespace GymSystem.API.Controllers
             _productRepo = productRepo ?? throw new ArgumentNullException(nameof(productRepo));
         }
 
-      
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,7 +34,7 @@ namespace GymSystem.API.Controllers
             if (!ModelState.IsValid || productCreateDto == null)
             {
                 return BadRequest(CreateValidationError("Invalid product data"));
-            }   
+            }
 
             try
             {
@@ -48,7 +48,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-   
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -68,7 +68,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+
         [HttpPut("{productId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

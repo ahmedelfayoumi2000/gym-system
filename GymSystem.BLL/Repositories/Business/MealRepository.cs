@@ -4,12 +4,11 @@ using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Specifications;
+using GymSystem.BLL.Specifications.MealSpec;
 using GymSystem.DAL.Entities;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Repositories.Business
@@ -30,7 +29,6 @@ namespace GymSystem.BLL.Repositories.Business
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-       
         public async Task<ApiResponse> CreateMeal(MealDto meal)
         {
             if (meal == null)
@@ -43,8 +41,8 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogInformation("Attempting to create meal with name: {MealName}", meal.MealName);
 
-                var spec = new BaseSpecification<Meal>(m => m.MealName == meal.MealName && !m.IsDeleted);
-                var existingMeal = await _unitOfWork.Repository<Meal>().GetByIdWithSpecAsync(spec);
+                var spec = new MealByNameSpecification(meal.MealName);
+                var existingMeal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (existingMeal != null)
                 {
                     _logger.LogWarning("Meal with name {MealName} already exists.", meal.MealName);
@@ -65,15 +63,14 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-       
         public async Task<ApiResponse> DeleteMeal(int id)
         {
             try
             {
                 _logger.LogInformation("Attempting to delete meal with ID: {Id}", id);
 
-                var spec = new BaseSpecification<Meal>(m => m.Id == id && !m.IsDeleted);
-                var meal = await _unitOfWork.Repository<Meal>().GetByIdWithSpecAsync(spec);
+                var spec = new MealByIdSpecification(id);
+                var meal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (meal == null)
                 {
                     _logger.LogWarning("Meal with ID {Id} not found or already deleted.", id);
@@ -100,7 +97,7 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogInformation("Retrieving all active meals.");
 
-                var spec = new BaseSpecification<Meal>(m => !m.IsDeleted);
+                var spec = new AllMealsSpecification();
                 var meals = await _unitOfWork.Repository<Meal>().GetAllWithSpecAsync(spec);
                 var mealDtos = _mapper.Map<IEnumerable<MealDto>>(meals);
 
@@ -114,15 +111,14 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-      
         public async Task<MealDto> GetMealById(int id)
         {
             try
             {
                 _logger.LogInformation("Retrieving meal with ID: {Id}", id);
 
-                var spec = new BaseSpecification<Meal>(m => m.Id == id && !m.IsDeleted);
-                var meal = await _unitOfWork.Repository<Meal>().GetByIdWithSpecAsync(spec);
+                var spec = new MealByIdSpecification(id);
+                var meal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (meal == null)
                 {
                     _logger.LogWarning("Meal with ID {Id} not found.", id);
@@ -140,7 +136,6 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
-       
         public async Task<ApiResponse> UpdateMeal(int id, MealDto meal)
         {
             if (meal == null)
@@ -153,8 +148,8 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 _logger.LogInformation("Attempting to update meal with ID: {Id}", id);
 
-                var spec = new BaseSpecification<Meal>(m => m.Id == id && !m.IsDeleted);
-                var mealToUpdate = await _unitOfWork.Repository<Meal>().GetByIdWithSpecAsync(spec);
+                var spec = new MealByIdSpecification(id);
+                var mealToUpdate = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (mealToUpdate == null)
                 {
                     _logger.LogWarning("Meal with ID {Id} not found or already deleted.", id);

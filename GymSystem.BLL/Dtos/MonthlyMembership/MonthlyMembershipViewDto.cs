@@ -1,6 +1,8 @@
-﻿using GymSystem.DAL.Entities;
+﻿using GymSystem.BLL.Dtos.Offer;
+using GymSystem.DAL.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +17,7 @@ namespace GymSystem.BLL.Dtos.MonthlyMembership
         public string UserEmail { get; set; }
         public string PhoneNumber { get; set; }
 
-        public Plan Plan { get; set; }
+        public Plan? Plan { get; set; }
 
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

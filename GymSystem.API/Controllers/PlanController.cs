@@ -21,7 +21,7 @@ namespace GymSystem.API.Controllers
             _planRepo = planRepo ?? throw new ArgumentNullException(nameof(planRepo));
         }
 
-       
+
         //[Authorize(Roles = "Admin")]
         //[HttpGet("filtered")]
         //[ProducesResponseType(StatusCodes.Status200OK)]
@@ -46,7 +46,7 @@ namespace GymSystem.API.Controllers
         //    }
         //}
 
-       
+
         [Authorize(Roles = "Admin,Receptionist,Trainer")]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -90,7 +90,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-       
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -110,7 +110,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-       
+
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -132,7 +132,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

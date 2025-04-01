@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DAL.Entities
 {
-    public class ExerciseCategory :BaseEntity
+    public class ExerciseCategory : BaseEntity
     {
         public string? ImageUrl { get; set; }
         [NotMapped]
