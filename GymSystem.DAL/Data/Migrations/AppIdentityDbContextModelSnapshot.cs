@@ -22,6 +22,36 @@ namespace GymSystem.DAL.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ExerciseUserFavoriteExercise", b =>
+                {
+                    b.Property<int>("ExercisesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserFavoriteExercisesId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ExercisesId", "UserFavoriteExercisesId");
+
+                    b.HasIndex("UserFavoriteExercisesId");
+
+                    b.ToTable("ExerciseUserFavoriteExercise");
+                });
+
+            modelBuilder.Entity("ExerciseWorkoutPlan", b =>
+                {
+                    b.Property<int>("ExercisesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkoutPlansId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ExercisesId", "WorkoutPlansId");
+
+                    b.HasIndex("WorkoutPlansId");
+
+                    b.ToTable("ExerciseWorkoutPlan");
+                });
+
             modelBuilder.Entity("GymSystem.DAL.Entities.Attendance", b =>
                 {
                     b.Property<int>("Id")
@@ -190,6 +220,9 @@ namespace GymSystem.DAL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ExpectedCalories")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -199,17 +232,15 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<int>("Repetitions")
                         .HasColumnType("int");
 
-                    b.Property<int>("Sets")
+                    b.Property<int>("RestTimeSeconds")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WorkoutPlanId")
+                    b.Property<int>("Sets")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseCategoryId");
-
-                    b.HasIndex("WorkoutPlanId");
 
                     b.ToTable("Exercises");
                 });
@@ -308,9 +339,6 @@ namespace GymSystem.DAL.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
 
@@ -326,6 +354,27 @@ namespace GymSystem.DAL.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("gymSchedules");
+                });
+
+            modelBuilder.Entity("GymSystem.DAL.Entities.GymScheduleDays", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GymScheduleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GymScheduleId");
+
+                    b.ToTable("GymScheduleDays");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Identity.AppUser", b =>
@@ -357,17 +406,14 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FitnessLevel")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("FitnessLevel")
+                        .HasColumnType("int");
 
                     b.Property<string>("Gender")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Goal")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Goal")
+                        .HasColumnType("int");
 
                     b.Property<float?>("Height")
                         .HasColumnType("real");
@@ -418,9 +464,6 @@ namespace GymSystem.DAL.Data.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("StopDate")
                         .HasColumnType("datetime2");
@@ -837,6 +880,49 @@ namespace GymSystem.DAL.Data.Migrations
                     b.ToTable("Repairs");
                 });
 
+            modelBuilder.Entity("GymSystem.DAL.Entities.UserDailyStats", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CaloriesBurned")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Steps")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalCalories")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalSteps")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalWater")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("WaterIntake")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Weight")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserDailyStats");
+                });
+
             modelBuilder.Entity("GymSystem.DAL.Entities.UserFavoriteExercise", b =>
                 {
                     b.Property<int>("Id")
@@ -848,9 +934,6 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Property<DateTime>("AddedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ExerciseId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -859,8 +942,6 @@ namespace GymSystem.DAL.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ExerciseId");
 
                     b.HasIndex("UserId");
 
@@ -882,11 +963,11 @@ namespace GymSystem.DAL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("MembershipId")
+                        .HasColumnType("int");
 
                     b.Property<string>("PlanName")
                         .IsRequired()
@@ -896,6 +977,8 @@ namespace GymSystem.DAL.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MembershipId");
 
                     b.HasIndex("TrainerId");
 
@@ -1061,6 +1144,36 @@ namespace GymSystem.DAL.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ExerciseUserFavoriteExercise", b =>
+                {
+                    b.HasOne("GymSystem.DAL.Entities.Exercise", null)
+                        .WithMany()
+                        .HasForeignKey("ExercisesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GymSystem.DAL.Entities.UserFavoriteExercise", null)
+                        .WithMany()
+                        .HasForeignKey("UserFavoriteExercisesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ExerciseWorkoutPlan", b =>
+                {
+                    b.HasOne("GymSystem.DAL.Entities.Exercise", null)
+                        .WithMany()
+                        .HasForeignKey("ExercisesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GymSystem.DAL.Entities.WorkoutPlan", null)
+                        .WithMany()
+                        .HasForeignKey("WorkoutPlansId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("GymSystem.DAL.Entities.Attendance", b =>
                 {
                     b.HasOne("GymSystem.DAL.Entities.Membership", "Membership")
@@ -1112,14 +1225,7 @@ namespace GymSystem.DAL.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GymSystem.DAL.Entities.WorkoutPlan", "WorkoutPlan")
-                        .WithMany("Exercises")
-                        .HasForeignKey("WorkoutPlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("ExerciseCategory");
-
-                    b.Navigation("WorkoutPlan");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Feedback", b =>
@@ -1131,6 +1237,17 @@ namespace GymSystem.DAL.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GymSystem.DAL.Entities.GymScheduleDays", b =>
+                {
+                    b.HasOne("GymSystem.DAL.Entities.GymSchedule", "GymSchedule")
+                        .WithMany("DaysOfWeek")
+                        .HasForeignKey("GymScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GymSchedule");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.Identity.AppUser", b =>
@@ -1298,29 +1415,40 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Navigation("Equipment");
                 });
 
-            modelBuilder.Entity("GymSystem.DAL.Entities.UserFavoriteExercise", b =>
+            modelBuilder.Entity("GymSystem.DAL.Entities.UserDailyStats", b =>
                 {
-                    b.HasOne("GymSystem.DAL.Entities.Exercise", "Exercise")
-                        .WithMany()
-                        .HasForeignKey("ExerciseId");
-
                     b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Exercise");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GymSystem.DAL.Entities.UserFavoriteExercise", b =>
+                {
+                    b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("GymSystem.DAL.Entities.WorkoutPlan", b =>
                 {
+                    b.HasOne("GymSystem.DAL.Entities.Membership", "Membership")
+                        .WithMany()
+                        .HasForeignKey("MembershipId");
+
                     b.HasOne("GymSystem.DAL.Entities.Identity.AppUser", "Trainer")
                         .WithMany("WorkoutPlans")
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Membership");
 
                     b.Navigation("Trainer");
                 });
@@ -1381,6 +1509,11 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Navigation("Exercises");
                 });
 
+            modelBuilder.Entity("GymSystem.DAL.Entities.GymSchedule", b =>
+                {
+                    b.Navigation("DaysOfWeek");
+                });
+
             modelBuilder.Entity("GymSystem.DAL.Entities.Identity.AppUser", b =>
                 {
                     b.Navigation("Attendances");
@@ -1415,11 +1548,6 @@ namespace GymSystem.DAL.Data.Migrations
                     b.Navigation("Meals");
 
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("GymSystem.DAL.Entities.WorkoutPlan", b =>
-                {
-                    b.Navigation("Exercises");
                 });
 #pragma warning restore 612, 618
         }

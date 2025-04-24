@@ -10,8 +10,8 @@ namespace GymSystem.BLL.Dtos.GymSchedule
 {
     public class GymScheduleDto
     {
-        [Required(ErrorMessage = "Day of week is required.")]
-        public DayOfWeekEnum DayOfWeek { get; set; }
+        [Required(ErrorMessage = "Days of week are required.")]
+        public List<DayOfWeekEnum> DaysOfWeek { get; set; } = new List<DayOfWeekEnum>();
 
         [Required(ErrorMessage = "Start time is required.")]
         public TimeSpan StartTime { get; set; }

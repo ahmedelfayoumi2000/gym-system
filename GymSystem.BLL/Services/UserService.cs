@@ -1,4 +1,5 @@
-﻿using GymSystem.BLL.Interfaces;
+﻿// GymSystem.BLL/Services/UserService.cs
+using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +23,20 @@ namespace GymSystem.BLL.Services
         public Task<IdentityResult> UpdateAsync(AppUser user) => _userManager.UpdateAsync(user);
         public Task<int> CountAsync() => _userManager.Users.CountAsync();
         public async Task<IdentityResult> AddToRoleAsync(AppUser user, string role) => await _userManager.AddToRoleAsync(user, role);
+        public async Task<AppUser> FindByNameAsync(string userName)
+        {
+            return await _userManager.FindByNameAsync(userName);
+        }
+        public async Task<AppUser> FindByPhoneNumberAsync(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                throw new ArgumentException("Phone number cannot be null or empty.", nameof(phoneNumber));
+            }
 
+            return await _userManager.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+        }
 
     }
 }

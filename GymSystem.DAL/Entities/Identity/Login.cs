@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GymSystem.DAL.Entities.Enums.Auth;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace GymSystem.DAL.Entities.Identity
         [EmailAddress]
         public string Email { get; set; }
         public string Password { get; set; }
+        public Types? Type { get; set; }
 
     }
 }

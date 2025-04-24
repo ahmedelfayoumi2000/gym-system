@@ -5,7 +5,7 @@
         public string PlanName { get; set; }
         public int DurationDays { get; set; } 
         public decimal Price { get; set; }
-        public bool HasOffer { get; set; } = false; 
+        public bool HasOffer { get; set; } = false; //فيه عرض ساري علي الخطة؟
         public decimal? DiscountedPrice { get; set; }
         public DateTime? ExpireDate { get; set; }
 

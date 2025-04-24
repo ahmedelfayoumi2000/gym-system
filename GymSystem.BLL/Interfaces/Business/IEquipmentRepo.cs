@@ -9,7 +9,7 @@ namespace GymSystem.BLL.Interfaces.Business
 
     public interface IEquipmentRepo
     {
-        Task<IReadOnlyList<EquipmentViewDto>> GetAllAsync(SpecPrams specParams = null);
+        Task<IEnumerable<EquipmentViewDto>> GetAllAsync(SpecPrams specParams = null);
         Task<EquipmentViewDto> GetByIdAsync(int id);
         Task<ApiResponse> CreateAsync(EquipmentCreateDto equipmentCreateDto);
         Task<ApiResponse> UpdateAsync(int id, EquipmentCreateDto equipmentCreateDto);

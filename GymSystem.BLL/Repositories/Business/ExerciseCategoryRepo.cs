@@ -49,11 +49,19 @@ namespace GymSystem.BLL.Repositories
 
                 var category = _mapper.Map<ExerciseCategory>(exerciseCategoryDto);
 
-                // معالجة الصورة إذا كانت موجودة (مشروطة ومعلّقة حاليًا)
-                //if (exerciseCategoryDto.Image != null)
-                //{
-                //    category.ImageUrl = await _imageService.UploadImageAsync(exerciseCategoryDto.Image, "exercise-categories");
-                //}
+
+                if (exerciseCategoryDto.Image != null)
+                {
+                    var uploadResult = await _imageService.UploadImageAsync(exerciseCategoryDto.Image);
+                    if (uploadResult.Item1 == 1)
+                    {
+                        category.ImageUrl = uploadResult.Item2;
+                    }
+                    else
+                    {
+                        return new ApiResponse(400, $"Failed to Upload Image: {uploadResult.Item2}"); // رسالة الخطأ
+                    }
+                }
 
                 category.IsDeleted = false;
                 _unitOfWork.Repository<ExerciseCategory>().Add(category);
@@ -167,16 +175,24 @@ namespace GymSystem.BLL.Repositories
                 // تحديث الحقول
                 category.CategoryName = exerciseCategoryDto.CategoryName;
 
-                // معالجة الصورة إذا تم إرسال صورة جديدة (مشروطة ومعلّقة حاليًا)
-                //if (exerciseCategoryDto.Image != null)
-                //{
-                //    // حذف الصورة القديمة إذا كانت موجودة
-                //    if (!string.IsNullOrEmpty(category.ImageUrl))
-                //    {
-                //        await _imageService.DeleteImageAsync(category.ImageUrl);
-                //    }
-                //    category.ImageUrl = await _imageService.UploadImageAsync(exerciseCategoryDto.Image, "exercise-categories");
-                //}
+
+                if (exerciseCategoryDto.Image != null)
+                {
+
+                    if (!string.IsNullOrEmpty(category.ImageUrl))
+                    {
+                        await _imageService.DeleteImageAsync(category.ImageUrl);
+                    }
+                    var uploadResult = await _imageService.UploadImageAsync(exerciseCategoryDto.Image);
+                    if (uploadResult.Item1 == 1)
+                    {
+                        category.ImageUrl = uploadResult.Item2;
+                    }
+                    else
+                    {
+                        return new ApiResponse(400, $"Failed to Upload Image: {uploadResult.Item2}"); // رسالة الخطأ
+                    }
+                }
 
                 _unitOfWork.Repository<ExerciseCategory>().Update(category);
 

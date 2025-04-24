@@ -11,10 +11,12 @@ namespace GymSystem.BLL.Interfaces.Business
     public interface IWorkoutPlanRepo
     {
         Task<ApiResponse> CreateWorkoutPlan(WorkoutPlanDto workoutPlanDto);
-        Task<ApiResponse> UpdateWorkoutPlan(int id, WorkoutPlanDto workoutPlanDto);
-        Task<ApiResponse> DeleteWorkoutPlan(int workoutPlanId);
-        Task<WorkoutPlanDto> GetWorkoutPlan(int workoutPlanId);
-        Task<IEnumerable<WorkoutPlanDto>> GetWorkoutPlans();
-        Task<IEnumerable<WorkoutPlanDto>> GetWorkoutPlansByDay(DayOfWeek dayOfWeek);
+        Task<ApiResponse> AddExerciseToWorkoutPlan(int workoutPlanId, int exerciseId, int membershipId, string trainerId);
+        Task<ApiResponse> RemoveExerciseFromWorkoutPlan(int workoutPlanId, int exerciseId, int membershipId, string trainerId);
+        Task<ApiResponse> UpdateWorkoutPlan(int id, WorkoutPlanDto workoutPlanDto, string trainerId);
+        Task<ApiResponse> DeleteWorkoutPlan(int id, string trainerId);
+        Task<IEnumerable<WorkoutPlanDto>> GetWorkoutPlansForMember(int membershipId, string trainerId);
+        Task<IEnumerable<WorkoutPlanDto>> GetMemberWorkoutPlans(string userId);
+        Task<ApiResponse> GetWorkoutPlanById(int id);
     }
 }

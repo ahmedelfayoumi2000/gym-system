@@ -5,10 +5,11 @@ namespace GymSystem.BLL.Specifications.WorkoutPlanSpec
 {
     public class WorkoutPlanByDayAndUserSpecification : BaseSpecification<WorkoutPlan>
     {
-        public WorkoutPlanByDayAndUserSpecification(DayOfWeek day, string userId)
-            : base(w => !w.IsDeleted && w.DayOfWeek == day &&
-                        (string.IsNullOrEmpty(w.TrainerId) || w.TrainerId == userId))
+        public WorkoutPlanByDayAndUserSpecification(DayOfWeek day, int membershipId)
+            : base(w => !w.IsDeleted && w.DayOfWeek == day && w.MembershipId == membershipId)
         {
+            AddIncludes(w => w.Exercises);
+            AddThenInclude(w => w.Exercises, e => e.ExerciseCategory);
         }
     }
 }

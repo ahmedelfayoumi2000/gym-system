@@ -13,6 +13,7 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> CreateNutritionPlan(NutritionPlanDto nutritionPlanDto);
         Task<ApiResponse> UpdateNutritionPlan(int nutritionPlanId, NutritionPlanDto nutritionPlanDto);
         Task<ApiResponse> DeleteNutritionPlan(int nutritionPlanId);
+        Task<ApiResponse> GenerateNutritionPlanForUserAsync(int userId);
         Task<NutritionPlanDto> GetNutritionPlan(int nutritionPlanId);
         Task<IEnumerable<NutritionPlanDto>> GetNutritionPlans();
     }

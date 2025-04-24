@@ -19,11 +19,6 @@ namespace GymSystem.DAL.Data.Config
                    .HasForeignKey(wp => wp.TrainerId)
                    .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasMany(wp => wp.Exercises)
-                   .WithOne(e => e.WorkoutPlan)
-                   .HasForeignKey(e => e.WorkoutPlanId)
-                   .OnDelete(DeleteBehavior.SetNull);
-
             builder.HasQueryFilter(u => !u.IsDeleted);
         }
     }

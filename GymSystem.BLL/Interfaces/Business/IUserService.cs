@@ -16,5 +16,8 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<IdentityResult> UpdateAsync(AppUser user);
         Task<int> CountAsync();
         Task<IdentityResult> AddToRoleAsync(AppUser user, string role);
+        Task<AppUser> FindByNameAsync(string userName);
+        Task<AppUser> FindByPhoneNumberAsync(string userName);
+
     }
 }

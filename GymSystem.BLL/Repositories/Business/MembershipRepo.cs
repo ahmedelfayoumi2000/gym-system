@@ -11,6 +11,7 @@ using GymSystem.BLL.Specifications.MembershipSpec;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -24,23 +25,29 @@ namespace GymSystem.BLL.Repositories.Business
     public class MembershipRepository : IMembershipRepo
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<AppUser> _userManager;
         private readonly IMapper _mapper;
         private readonly ILogger<MembershipRepository> _logger;
+        private readonly IImageService _imageService;
         private readonly IUserService _userService;
         private readonly IUserCodeGenerator _userCodeGenerator;
 
         public MembershipRepository(
             IUnitOfWork unitOfWork,
+            UserManager<AppUser> userManager,
             IUserService userService,
             IMapper mapper,
             IUserCodeGenerator userCodeGenerator,
-            ILogger<MembershipRepository> logger)
+            ILogger<MembershipRepository> logger,
+            IImageService imageService)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _userManager = userManager;
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _userCodeGenerator = userCodeGenerator ?? throw new ArgumentNullException(nameof(userCodeGenerator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _imageService = imageService;
         }
 
         #region Retrieval Methods
@@ -51,9 +58,7 @@ namespace GymSystem.BLL.Repositories.Business
             {
                 await UpdateExpiredMemberships();
 
-                ISpecification<Membership> spec = specParams != null
-                    ? new MonthlyMembershipWithFiltersSpecification(specParams)
-                    : new MonthlyMembershipWithRelationsSpecification();
+                ISpecification<Membership> spec = new MonthlyMembershipWithRelationsSpecification();
 
                 var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
 
@@ -76,20 +81,20 @@ namespace GymSystem.BLL.Repositories.Business
             return membership == null ? null : _mapper.Map<MonthlyMembershipViewDto>(membership);
         }
 
-        public async Task<IEnumerable<MonthlyMembershipViewDto>> GetActiveMembershipsAsync()
+        public async Task<IEnumerable<MonthlyMembershipViewDto>> GetActiveMembershipsAsync(SpecPrams specParams = null)
         {
             await UpdateExpiredMemberships();
 
-            var spec = new MonthlyMembershipWithRelationsSpecification(m => m.IsActive);
+            ISpecification<Membership> spec = new MonthlyMembershipWithFiltersSpecification(specParams);
             var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
             return _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
         }
 
-        public async Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync()
+        public async Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync(SpecPrams specParams = null)
         {
             await UpdateExpiredMemberships();
 
-            var spec = new MonthlyMembershipWithRelationsSpecification(m => !m.IsActive);
+            ISpecification<Membership> spec = new MonthlyMembershipWithFiltersSpecification(specParams);
             var memberships = await _unitOfWork.Repository<Membership>().GetAllWithSpecAsync(spec);
             return _mapper.Map<IEnumerable<MonthlyMembershipViewDto>>(memberships);
         }
@@ -104,36 +109,50 @@ namespace GymSystem.BLL.Repositories.Business
 
             using (var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                var plan = await GetPlanOrFail(membershipDto.PlanId);
-                var user = await HandleUserCreationOrUpdate(membershipDto, plan.Id);
-
-                if (await HasActiveMembership(user.Id))
+                try
                 {
-                    return new ApiResponse(409, "User already has an active membership.");
+                    var plan = await GetPlanOrFail(membershipDto.PlanId);
+                    var user = await HandleUserCreationOrUpdate(membershipDto, plan.Id);
+
+                    if (await HasActiveMembership(user.Id))
+                    {
+                        return new ApiResponse(409, "User already has an active membership.");
+                    }
+
+                    if (plan.ExpireDate.HasValue && plan.ExpireDate.Value.Date < DateTime.UtcNow.Date)
+                    {
+                        plan.HasOffer = false;
+                        plan.DiscountedPrice = null;
+                        plan.ExpireDate = null;
+
+                        _unitOfWork.Repository<Plan>().Update(plan);
+                    }
+
+                    var membership = MapAndConfigureMembership(membershipDto, user, plan);
+                    await _unitOfWork.Repository<Membership>().Add(membership);
+
+                    await RecordFinancialTransaction(membership, TransactionType.Payment);
+
+                    var result = await _unitOfWork.Complete();
+                    if (result <= 0)
+                    {
+                        transactionScope.Dispose();
+                        return new ApiResponse(500, "Failed to save the monthly membership to the database.");
+                    }
+
+                    transactionScope.Complete();
+                    return new ApiResponse(201, "Monthly membership created successfully", _mapper.Map<MonthlyMembershipViewDto>(membership));
                 }
-                if (plan.ExpireDate < DateTime.UtcNow || plan.HasOffer == false)
-                {
-                    plan.HasOffer = false;
-                    plan.DiscountedPrice = null;
-                    plan.ExpireDate = null;
-
-                    _unitOfWork.Repository<Plan>().Update(plan);
-                }
-
-                var membership = MapAndConfigureMembership(membershipDto, user, plan);
-                await _unitOfWork.Repository<Membership>().Add(membership);
-
-                await RecordFinancialTransaction(membership, TransactionType.Payment);
-
-                var result = await _unitOfWork.Complete();
-                if (result <= 0)
+                catch (InvalidOperationException ex)
                 {
                     transactionScope.Dispose();
-                    return new ApiResponse(500, "Failed to save the monthly membership to the database.");
+                    return new ApiResponse(400, ex.Message); 
                 }
-
-                transactionScope.Complete();
-                return new ApiResponse(201, "Monthly membership created successfully", _mapper.Map<MonthlyMembershipViewDto>(membership));
+                catch (Exception ex)
+                {
+                    transactionScope.Dispose();
+                    return new ApiResponse(500, "An error occurred while creating the membership. Please try again later.", ex);
+                }
             }
         }
 
@@ -266,14 +285,51 @@ namespace GymSystem.BLL.Repositories.Business
 
         public async Task<UserProfileDto> GetUserProfileAsync(string userId)
         {
-            var user = await _userService.FindByIdAsync(userId);
-            return user == null ? null : _mapper.Map<UserProfileDto>(user);
+            try
+            {
+                var user = await _userService.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new Exception($"User with ID {userId} not found in the database.");
+                }
+
+                var roles = await _userManager.GetRolesAsync(user);
+                var UserProfile = _mapper.Map<UserProfileDto>(user);
+                UserProfile.Roles = roles.ToList();
+
+                return UserProfile;
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
         }
 
         public async Task<ApiResponse> UpdateProfileAsync(string userId, UpdateProfileDto profileDto)
         {
             var user = await _userService.FindByIdAsync(userId) ?? throw new SecurityException("User not found.");
+
+
+
             _mapper.Map(profileDto, user);
+            if (profileDto.Image != null)
+            {
+
+                if (!string.IsNullOrEmpty(user.ProfileImageName))
+                {
+                    await _imageService.DeleteImageAsync(user.ProfileImageName);
+                }
+                var uploadResult = await _imageService.UploadImageAsync(profileDto.Image);
+                if (uploadResult.Item1 == 1)
+                {
+                    user.ProfileImageName = uploadResult.Item2;
+                }
+                else
+                {
+                    throw new ApplicationException($"Failed to Upload Image: {uploadResult.Item2}");
+                }
+            }
 
             var result = await _userService.UpdateAsync(user);
             return result.Succeeded
@@ -284,6 +340,8 @@ namespace GymSystem.BLL.Repositories.Business
         public async Task<ApiResponse> UpdateGoalAsync(string userId, UpdateGoalDto goalDto)
         {
             var user = await _userService.FindByIdAsync(userId) ?? throw new SecurityException("User not found.");
+            if (user.Goal == goalDto.Goal)
+                return new ApiResponse(200, "No changes made to Your Goal");
             user.Goal = goalDto.Goal;
 
             var result = await _userService.UpdateAsync(user);
@@ -295,6 +353,8 @@ namespace GymSystem.BLL.Repositories.Business
         public async Task<ApiResponse> UpdateLevelAsync(string userId, UpdateLevelDto levelDto)
         {
             var user = await _userService.FindByIdAsync(userId) ?? throw new SecurityException("User not found.");
+            if (user.FitnessLevel == levelDto.FitnessLevel)
+                return new ApiResponse(200, "No changes made to fitness level");
             user.FitnessLevel = levelDto.FitnessLevel;
 
             var result = await _userService.UpdateAsync(user);
@@ -343,7 +403,7 @@ namespace GymSystem.BLL.Repositories.Business
                     membership.StopDate = null;
                     if (membership.EndDate >= DateTime.UtcNow)
                     {
-                        membership.IsActive = true; // إعادة تفعيل لو الاشتراك لسه ساري
+                        membership.IsActive = true;
                         needsUpdate = true;
                     }
                 }
@@ -445,35 +505,59 @@ namespace GymSystem.BLL.Repositories.Business
 
         private async Task<AppUser> HandleUserCreationOrUpdate(MonthlyMembershipCreateDto membershipDto, int planId)
         {
-            var existingUser = await _userService.FindByEmailAsync(membershipDto.UserEmail);
-            if (existingUser == null)
+            // Check by email
+            var existingUserByEmail = await _userService.FindByEmailAsync(membershipDto.UserEmail);
+            if (existingUserByEmail != null)
             {
-                var userCode = await _userCodeGenerator.GenerateUserCodeAsync(planId, await _userService.CountAsync());
-                existingUser = new AppUser
+                if (existingUserByEmail.PhoneNumber == membershipDto.phoneNumber)
                 {
-                    DisplayName = membershipDto.UserName,
-                    UserName = membershipDto.UserName,
-                    Email = membershipDto.UserEmail,
-                    PhoneNumber = membershipDto.phoneNumber,
-                    UserRole = 1, 
-                    EmailConfirmed = true,
-                    UserCode = userCode
-                };
-
-                var result = await _userService.CreateAsync(existingUser, "Default@123");
-                if (!result.Succeeded) throw new InvalidOperationException("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-
-                string roleName = existingUser.UserRole == 1 ? "Member" : null;
-                var roleResult = await _userService.AddToRoleAsync(existingUser, roleName);
-                if (!roleResult.Succeeded) throw new InvalidOperationException("Failed to assign role to user: " + string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                    throw new InvalidOperationException($"A user with PhoneNumber '{membershipDto.phoneNumber}' and email '{membershipDto.UserEmail}' already exists.");
+                }
+                if (string.IsNullOrEmpty(existingUserByEmail.UserCode))
+                {
+                    existingUserByEmail.UserCode = await _userCodeGenerator.GenerateUserCodeAsync(planId, await _userService.CountAsync());
+                    var updateResult = await _userService.UpdateAsync(existingUserByEmail);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException("Failed to update user code: " + string.Join(", ", updateResult.Errors.Select(e => e.Description)));
+                    }
+                }
+                return existingUserByEmail;
             }
-            else if (string.IsNullOrEmpty(existingUser.UserCode))
+
+            // Check by PhoneNumber 
+            var existingUserByName = await _userService.FindByPhoneNumberAsync(membershipDto.phoneNumber);
+            if (existingUserByName != null)
             {
-                existingUser.UserCode = await _userCodeGenerator.GenerateUserCodeAsync(planId, await _userService.CountAsync());
-                await _userService.UpdateAsync(existingUser);
+                throw new InvalidOperationException($"A user with PhoneNumber '{membershipDto.phoneNumber}' already exists.");
+            }
+            // Create new user if no conflicts
+            var userCode = await _userCodeGenerator.GenerateUserCodeAsync(planId, await _userService.CountAsync());
+            var newUser = new AppUser
+            {
+                DisplayName = membershipDto.UserName,
+                UserName = membershipDto.UserEmail + $"{userCode}",
+                Email = membershipDto.UserEmail,
+                PhoneNumber = membershipDto.phoneNumber,
+                UserRole = 1,
+                EmailConfirmed = true,
+                UserCode = userCode
+            };
+
+            var result = await _userService.CreateAsync(newUser, "Default@123");
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            return existingUser;
+            string roleName = newUser.UserRole == 1 ? "Member" : null;
+            var roleResult = await _userService.AddToRoleAsync(newUser, roleName);
+            if (!roleResult.Succeeded)
+            {
+                throw new InvalidOperationException("Failed to assign role to user: " + string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+            }
+
+            return newUser;
         }
 
         private async Task<bool> HasActiveMembership(string userId)

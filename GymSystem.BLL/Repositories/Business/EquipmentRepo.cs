@@ -31,7 +31,7 @@ namespace GymSystem.BLL.Repositories
         }
 
 
-        public async Task<IReadOnlyList<EquipmentViewDto>> GetAllAsync(SpecPrams specParams = null)
+        public async Task<IEnumerable<EquipmentViewDto>> GetAllAsync(SpecPrams specParams = null)
         {
             try
             {

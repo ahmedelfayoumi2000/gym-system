@@ -5,6 +5,7 @@ using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Identity;
 using GymSystem.DAL.Identity;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 {
@@ -68,5 +69,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     {
         return await _context.Set<T>().FirstOrDefaultAsync(u => EF.Property<string>(u, "UserEmail") == email);
     }
+
+
 
 }

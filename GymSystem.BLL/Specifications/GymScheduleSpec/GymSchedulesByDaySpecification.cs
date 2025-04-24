@@ -6,9 +6,10 @@ namespace GymSystem.BLL.Specifications.GymScheduleSpec
 {
     public class GymSchedulesByDaySpecification : BaseSpecification<GymSchedule>
     {
-        public GymSchedulesByDaySpecification(DayOfWeekEnum dayOfWeek)
-            : base(s => s.DayOfWeek == dayOfWeek && s.IsActive)
+        public GymSchedulesByDaySpecification(DayOfWeekEnum day)
+            : base(s => s.IsActive && s.DaysOfWeek.Any(d => d.DayOfWeek == day))
         {
+            AddIncludes(s => s.DaysOfWeek);
         }
     }
 }

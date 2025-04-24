@@ -24,6 +24,8 @@ namespace GymSystem.API.DTOs.Trainer
         [Required(ErrorMessage = "Gender is required")]
         [EnumDataType(typeof(Gender), ErrorMessage = "Invalid gender")]
         public string Gender { get; set; }
+
+
         public Address? Address { get; set; }
 
         [Required(ErrorMessage = "Age is required")]

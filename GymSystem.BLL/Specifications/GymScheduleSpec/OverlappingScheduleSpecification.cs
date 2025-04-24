@@ -7,14 +7,12 @@ namespace GymSystem.BLL.Specifications.GymScheduleSpec
 {
     public class OverlappingScheduleSpecification : BaseSpecification<GymSchedule>
     {
-        public OverlappingScheduleSpecification(DayOfWeekEnum dayOfWeek, TimeSpan startTime, TimeSpan endTime)
-            : base(s =>
-                s.DayOfWeek == dayOfWeek &&
-                s.IsActive &&
-                ((startTime >= s.StartTime && startTime < s.EndTime) ||
-                 (endTime > s.StartTime && endTime <= s.EndTime) ||
-                 (startTime <= s.StartTime && endTime >= s.EndTime)))
+        public OverlappingScheduleSpecification(DayOfWeekEnum day, TimeSpan startTime, TimeSpan endTime)
+            : base(s => s.DaysOfWeek.Any(d => d.DayOfWeek == day) &&
+                        s.IsActive &&
+                        (s.StartTime < endTime && s.EndTime > startTime))
         {
+            AddIncludes(s => s.DaysOfWeek);
         }
     }
 }

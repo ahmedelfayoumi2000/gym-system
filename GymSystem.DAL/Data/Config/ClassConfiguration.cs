@@ -29,7 +29,7 @@ namespace GymSystem.DAL.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
 
 
-            // Query Filter لاستبعاد السجلات المحذوفة
+            // Query Filter يستبعد السجلات المحذوفة
             builder.HasQueryFilter(c => !c.IsDeleted);
 
         }

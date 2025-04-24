@@ -9,7 +9,7 @@ namespace GymSystem.DAL.Entities
 {
     public class GymSchedule : BaseEntity
     {
-        public DayOfWeekEnum DayOfWeek { get; set; }
+        public List<GymScheduleDays> DaysOfWeek { get; set; } = new List<GymScheduleDays>();
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public GroupTypeEnum GroupType { get; set; }

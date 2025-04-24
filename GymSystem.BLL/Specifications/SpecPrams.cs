@@ -19,6 +19,7 @@ namespace GymSystem.BLL.Specifications
         }
 
         public string? UserCode { get; set; }
+        public bool? IsActive { get; set; }
         public string? Sort { get; set; }
 
         private string? search;

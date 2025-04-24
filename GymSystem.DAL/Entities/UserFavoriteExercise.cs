@@ -12,10 +12,7 @@ namespace GymSystem.DAL.Entities
     {
         public string UserId { get; set; }
         public AppUser User { get; set; }
-
-        public int? ExerciseId { get; set; }
-        public Exercise? Exercise { get; set; }
-
+        public ICollection<Exercise> Exercises { get; set; } = new HashSet<Exercise>();
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
         public bool IsDeleted { get; set; } = false;
     }

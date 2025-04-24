@@ -10,6 +10,8 @@ namespace GymSystem.BLL.Specifications.WorkoutPlanSpec
             : base(w => w.Id == workoutPlanId && !w.IsDeleted)
         {
             AddIncludes(w => w.Exercises);
+            AddThenInclude(w => w.Exercises, e => e.ExerciseCategory);
+
         }
     }
 }

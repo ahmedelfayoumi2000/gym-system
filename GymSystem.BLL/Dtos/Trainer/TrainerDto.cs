@@ -16,11 +16,7 @@ namespace GymSystem.BLL.Dtos.Trainer
         public string Gender { get; set; }
         public uint Age { get; set; }
         public Address? Address { get; set; }
-        //public DateTime StartDate { get; set; }
-        //      public DateTime EndDate { get; set; }
         public bool IsStopped { get; set; }
-        //public int HaveDays { get; set; }
-        //public string? AddBy { get; set; }
         public decimal Salary { get; set; }
 
     }

@@ -35,4 +35,4 @@ namespace GymSystem.BLL.Services.Auth
                 throw new InvalidOperationException($"Failed to remove user with ID {userId} from active users list.");
         }
     }
-}   
+}

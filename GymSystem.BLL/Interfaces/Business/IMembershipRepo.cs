@@ -15,8 +15,8 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> CreateAsync(MonthlyMembershipCreateDto membershipDto);
         Task<ApiResponse> UpdateAsync(int id, MonthlyMembershipUpdateDto membershipDto);
         Task<ApiResponse> DeleteAsync(int id);
-        Task<IEnumerable<MonthlyMembershipViewDto>> GetActiveMembershipsAsync();
-        Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync();
+        Task<IEnumerable<MonthlyMembershipViewDto>> GetActiveMembershipsAsync(SpecPrams specParams = null);
+        Task<IEnumerable<MonthlyMembershipViewDto>> GetSuspendedMembershipsAsync(SpecPrams specParams = null);
         Task<ApiResponse> RenewMembershipAsync(MonthlyMembershipRenewDto renewDto);
         Task<ApiResponse> StopMembershipAsync(StopMembershipDto stopMembershipDto, string currentUserId);
 

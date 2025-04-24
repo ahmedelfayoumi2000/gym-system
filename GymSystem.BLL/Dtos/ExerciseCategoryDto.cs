@@ -14,6 +14,6 @@ namespace GymSystem.BLL.Dtos
         public string CategoryName { get; set; }
         public IFormFile? Image { get; set; }
         public string? ImageUrl { get; set; }
-        public bool? IsDeleted { get; set; }
+        public bool? IsDeleted { get; set; } = false;
     }
 }

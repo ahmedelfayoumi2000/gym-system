@@ -56,11 +56,11 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
                 var repairs = await _unitOfWork.Repository<Repair>()
-                    .GetRepairByEquipmentIdAsync(EquipmentId); 
+                    .GetRepairByEquipmentIdAsync(EquipmentId);
 
                 if (repairs == null || !repairs.Any())
                 {
-                    return new List<RepairDto>(); 
+                    return new List<RepairDto>();
                 }
 
                 var repairDtos = _mapper.Map<List<RepairDto>>(repairs);

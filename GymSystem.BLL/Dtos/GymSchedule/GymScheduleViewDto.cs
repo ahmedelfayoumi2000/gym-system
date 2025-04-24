@@ -10,7 +10,7 @@ namespace GymSystem.BLL.Dtos.GymSchedule
     public class GymScheduleViewDto
     {
         public int Id { get; set; }
-        public DayOfWeekEnum DayOfWeek { get; set; }
+        public List<DayOfWeekEnum> DaysOfWeek { get; set; } = new List<DayOfWeekEnum>();
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public GroupTypeEnum GroupType { get; set; }

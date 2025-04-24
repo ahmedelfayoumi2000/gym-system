@@ -14,10 +14,6 @@ namespace GymSystem.DAL.Data.Config
         public void Configure(EntityTypeBuilder<Exercise> builder)
         {
             builder.HasKey(e => e.Id);
-            builder.HasOne(e => e.WorkoutPlan)
-                   .WithMany(wp => wp.Exercises)
-                   .HasForeignKey(e => e.WorkoutPlanId)
-                   .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasOne(e => e.ExerciseCategory)
                    .WithMany(ec => ec.Exercises)

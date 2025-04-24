@@ -11,7 +11,7 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> AddClass(ClassDto classDto);
         Task<ApiResponse> DeleteClass(int id);
         Task<ClassViewDto> GetClass(int id);
-        Task<PaginatedResult<ClassViewDto>> GetClasses(SpecPrams specParams); 
+        Task<PaginatedResult<ClassViewDto>> GetClasses(SpecPrams specParams);
         Task<ApiResponse> UpdateClass(int id, ClassDto classDto);
     }
 }

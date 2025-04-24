@@ -11,5 +11,6 @@ namespace GymSystem.BLL.Interfaces.Business
         Task<ApiResponse> GetSchedule(int id);
         Task<ApiResponse> GetSchedules();
         Task<ApiResponse> GetSchedulesByDay(string dayOfWeek);
+        Task<ApiResponse> GetCurrentActiveSchedule();
     }
 }

@@ -1,15 +1,25 @@
-﻿using GymSystem.API.Extentions;
+﻿using Azure.Identity;
+using GymSystem.API.Extentions;
 using GymSystem.API.MiddleWares;
+using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Repositories.Business;
+using GymSystem.BLL.Services;
+using GymSystem.BLL.Services.Business;
 using GymSystem.DAL.Data;
 using GymSystem.DAL.Entities.Identity;
 using GymSystem.DAL.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUrl = "https://GymSystemKeyVault.vault.azure.net/"; 
+builder.Configuration.AddAzureKeyVault(
+    new Uri(keyVaultUrl),
+    new DefaultAzureCredential());
 
 // Add services to the container.
 
@@ -44,6 +54,34 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
     return ConnectionMultiplexer.Connect(redisConfig);
 });
 
+
+builder.Services.AddHttpClient<IGenerativeAIService, GeminiService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    
+    SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
+    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+    {
+        if (errors == System.Net.Security.SslPolicyErrors.None)
+            return true;
+
+        Console.WriteLine($"SSL Certificate error: {errors}");
+        return false; 
+    }
+});
+
+builder.Services.AddSingleton<IGenerativeAIService>(provider =>
+{
+    var httpClient = provider.GetRequiredService<HttpClient>();
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var apiKey = configuration["GoogleApiKey"];
+    var cache = provider.GetRequiredService<IDistributedCache>();
+    var validator = provider.GetRequiredService<PlanValidator>();
+    return new GeminiService(httpClient, apiKey, cache, validator);
+});
 // Register application services
 builder.Services.AddApplicationServices();
 

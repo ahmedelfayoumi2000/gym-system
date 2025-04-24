@@ -8,6 +8,10 @@ namespace GymSystem.BLL.Specifications.ExerciseSpec
         public ExerciseByCategorySpecification(int categoryId)
             : base(e => !e.IsDeleted && e.ExerciseCategoryId == categoryId)
         {
+            AddIncludes(m => m.UserFavoriteExercises);
+            AddIncludes(m => m.WorkoutPlans);
+            AddIncludes(m => m.ExerciseCategory);
+
         }
     }
 }

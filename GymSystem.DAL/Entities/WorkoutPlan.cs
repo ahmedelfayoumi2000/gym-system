@@ -11,15 +11,14 @@ namespace GymSystem.DAL.Entities
 {
     public class WorkoutPlan : BaseEntity
     {
-        public string? ImageUrl { get; set; }
-        [NotMapped]
-        public IFormFile Image { get; set; }
         public string PlanName { get; set; }
         public string Description { get; set; }
         public DayOfWeek DayOfWeek { get; set; } 
         public bool IsDeleted { get; set; }
         public string? TrainerId { get; set; }
         public AppUser? Trainer { get; set; }
-        public ICollection<Exercise> Exercises { get; set; }
+        public int? MembershipId { get; set; }
+        public Membership? Membership { get; set; }
+        public ICollection<Exercise> Exercises { get; set; } = new HashSet<Exercise>();
     }
 }

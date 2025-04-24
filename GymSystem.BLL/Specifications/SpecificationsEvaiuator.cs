@@ -28,7 +28,33 @@ namespace GymSystem.BLL.Specifications
 
             query = spec.Includes.Aggregate(query, (currentQuery, include) => currentQuery.Include(include));
 
-            //context.Set<Product>().Include(p => p.ProductPrand).Include(p => p.ProductType).ToList();
+            if (typeof(TEntity) == typeof(WorkoutPlan))
+            {
+                foreach (var (collection, thenInclude) in spec.ThenIncludes)
+                {
+                    // تحويل الـ Query لـ WorkoutPlan
+                    var workoutPlanQuery = query as IQueryable<WorkoutPlan>;
+                    if (workoutPlanQuery != null)
+                    {
+                        query = workoutPlanQuery
+                            .Include(w => w.Exercises)
+                            .ThenInclude(e => e.ExerciseCategory) as IQueryable<TEntity>;
+                    }
+                }
+            }
+            else if (typeof(TEntity) == typeof(UserFavoriteExercise))
+            {
+                foreach (var (collection, thenInclude) in spec.ThenIncludes)
+                {
+                    var userFavoriteExerciseQuery = query as IQueryable<UserFavoriteExercise>;
+                    if (userFavoriteExerciseQuery != null)
+                    {
+                        query = userFavoriteExerciseQuery
+                            .Include(u => u.Exercises) // افتراض إن العلاقة اسمها Exercise
+                            .ThenInclude(e => e.ExerciseCategory) as IQueryable<TEntity>;
+                    }
+                }
+            }
 
             return query;
         }

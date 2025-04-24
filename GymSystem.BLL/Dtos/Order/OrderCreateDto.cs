@@ -16,5 +16,6 @@ namespace GymSystem.BLL.Dtos.Order
         [Required(ErrorMessage = "Count is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Count must be greater than 0.")]
         public int Count { get; set; }
+
     }
 }

@@ -8,7 +8,9 @@ namespace GymSystem.BLL.Specifications.UserFavoriteExerciseSpec
         public UserFavoriteExerciseByUserSpecification(string userId)
             : base(f => f.UserId == userId && !f.IsDeleted)
         {
-            AddIncludes(f => f.Exercise);
+            AddIncludes(f => f.Exercises);
+            AddThenInclude(w => w.Exercises, e => e.ExerciseCategory);
+
         }
     }
 }

@@ -10,6 +10,7 @@ namespace GymSystem.BLL.Dtos
     public class RecipeDto
     {
         public int? Id { get; set; }
+        [Required(ErrorMessage = "Recipe name is required")]
         public string Name { get; set; }
         public string? Description { get; set; }
         public string Ingredients { get; set; }

@@ -156,7 +156,7 @@ namespace GymSystem.BLL.Repositories.Business
                     return new ApiResponse(404, $"Meal with ID {id} not found.");
                 }
 
-                _mapper.Map(meal, mealToUpdate); // Map DTO to existing entity
+                _mapper.Map(meal, mealToUpdate);
                 _unitOfWork.Repository<Meal>().Update(mealToUpdate);
                 await _unitOfWork.Complete();
 

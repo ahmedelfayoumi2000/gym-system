@@ -124,6 +124,9 @@ namespace GymSystem.BLL.Services.Auth
                 return new ApiResponse(400, "Email and password are required.");
             }
 
+            if (dto.Type == null)
+            { dto.Type = Types.Windows; }
+
             try
             {
                 var user = await _userManager.FindByEmailAsync(dto.Email);
@@ -131,6 +134,7 @@ namespace GymSystem.BLL.Services.Auth
                 {
                     return new ApiResponse(400, "User not found.");
                 }
+
 
                 if (!await _userManager.CheckPasswordAsync(user, dto.Password))
                 {
@@ -142,15 +146,35 @@ namespace GymSystem.BLL.Services.Auth
                     return new ApiResponse(400, "Email not confirmed. Please verify your email address.");
                 }
 
-                if (_activeUserManager.IsUserLoggedIn(user.Id))
-                {
-                    return new ApiResponse(403, "User is already logged in. Please log out first.");
-                }
+                //if (_activeUserManager.IsUserLoggedIn(user.Id))
+                //{
+                //	return new ApiResponse(403, "User is already logged in. Please log out first.");
+                //}
 
                 var (jwtToken, refreshToken) = await _tokenService.CreateTokenAsync(user);
                 var roles = await _userManager.GetRolesAsync(user);
+                if (!roles.Any())
+                {
+                    return new ApiResponse(403, "User has no roles assigned.");
+                }
 
-                _activeUserManager.AddUser(user.Id);
+                if (dto.Type == Types.Windows)
+                {
+                    // Windows: مسموح لـ Admin و Receptionist فقط
+                    if (!roles.Contains(UserRoleEnum.Admin.ToString()) && !roles.Contains(UserRoleEnum.Receptionist.ToString()))
+                    {
+                        return new ApiResponse(403, "Access denied: Only Admin and Receptionist can log in on Windows.");
+                    }
+                }
+                else if (dto.Type == Types.Mobile)
+                {
+                    if (!roles.Contains(UserRoleEnum.Admin.ToString()) && !roles.Contains(UserRoleEnum.Trainer.ToString()) && !roles.Contains(UserRoleEnum.Member.ToString()))
+                    {
+                        return new ApiResponse(403, "Access denied: Only Admin, Trainer, and Member can log in on Mobile.");
+                    }
+                }
+
+                //_activeUserManager.AddUser(user.Id);
 
                 return new ApiResponse(200, "Login successful",
                     new UserDto
@@ -160,6 +184,13 @@ namespace GymSystem.BLL.Services.Auth
                         UserName = user.UserName,
                         Email = user.Email,
                         PhoneNumber = user.PhoneNumber,
+                        Gender = user.Gender,
+                        Height = user.Height,
+                        Weight = user.Weight,
+                        Age = user.Age,
+                        FitnessLevel = user.FitnessLevel.ToString(),
+                        Goal = user.Goal.ToString(),
+                        IsProfileConfirmed = user.IsProfileConfirmed,
                         Roles = roles.ToList(),
                         Token = jwtToken,
                         RefreshToken = refreshToken.Token,

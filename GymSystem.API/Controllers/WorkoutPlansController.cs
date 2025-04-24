@@ -1,140 +1,188 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
+using GymSystem.BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    [Authorize] 
+    [Authorize]
     public class WorkoutPlansController : BaseApiController
     {
+        private readonly IUserService _userService;
         private readonly IWorkoutPlanRepo _workoutPlanRepo;
 
-        public WorkoutPlansController(IWorkoutPlanRepo workoutPlanRepo)
+        public WorkoutPlansController(IUserService userService, IWorkoutPlanRepo workoutPlanRepo)
         {
-            _workoutPlanRepo = workoutPlanRepo ?? throw new ArgumentNullException(nameof(workoutPlanRepo));
+            _userService = userService;
+            _workoutPlanRepo = workoutPlanRepo;
         }
 
-        // POST: api/WorkoutPlans
+        [Authorize(Roles = "Trainer")]
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateWorkoutPlan([FromBody] WorkoutPlanDto workoutPlanDto)
         {
-            if (workoutPlanDto == null)
+            workoutPlanDto.TrainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(workoutPlanDto.TrainerId))
             {
-                return BadRequest(new ApiResponse(400, "Workout plan data cannot be null."));
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
             }
 
+            var user = await _userService.FindByIdAsync(workoutPlanDto.TrainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {workoutPlanDto.TrainerId} not found in the database."));
+            }
             var response = await _workoutPlanRepo.CreateWorkoutPlan(workoutPlanDto);
             return HandleApiResponse(response);
         }
 
-        // PUT: api/WorkoutPlans/{id}
+        [Authorize(Roles = "Trainer")]
+        [HttpPost("{workoutPlanId}/exercises/{exerciseId}/membership/{membershipId}")]
+        public async Task<IActionResult> AddExerciseToWorkoutPlan(int workoutPlanId, int exerciseId, int membershipId)
+        {
+            var trainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(trainerId))
+            {
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
+            }
+
+            var user = await _userService.FindByIdAsync(trainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {trainerId} not found in the database."));
+            }
+            var response = await _workoutPlanRepo.AddExerciseToWorkoutPlan(workoutPlanId, exerciseId, membershipId, trainerId);
+            return HandleApiResponse(response);
+        }
+
+        [Authorize(Roles = "Trainer")]
+        [HttpDelete("{workoutPlanId}/exercises/{exerciseId}")]
+        public async Task<IActionResult> RemoveExerciseFromWorkoutPlan(int workoutPlanId, int exerciseId, [FromQuery] int membershipId)
+        {
+            var trainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(trainerId))
+            {
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
+            }
+            var user = await _userService.FindByIdAsync(trainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {trainerId} not found in the database."));
+            }
+            var response = await _workoutPlanRepo.RemoveExerciseFromWorkoutPlan(workoutPlanId, exerciseId, membershipId, trainerId);
+
+            return HandleApiResponse(response);
+        }
+
+        [Authorize(Roles = "Trainer")]
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateWorkoutPlan(int id, [FromBody] WorkoutPlanDto workoutPlanDto)
         {
-            if (id <= 0 || workoutPlanDto == null)
+            var trainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(trainerId))
             {
-                return BadRequest(new ApiResponse(400, "Invalid workout plan ID or data."));
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
             }
 
-            var response = await _workoutPlanRepo.UpdateWorkoutPlan(id, workoutPlanDto);
+            var user = await _userService.FindByIdAsync(trainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {trainerId} not found in the database."));
+            }
+            var response = await _workoutPlanRepo.UpdateWorkoutPlan(id, workoutPlanDto, trainerId);
             return HandleApiResponse(response);
         }
 
-        // DELETE: api/WorkoutPlans/{id}
+        [Authorize(Roles = "Trainer")]
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteWorkoutPlan(int id)
         {
-            if (id <= 0)
+            var trainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(trainerId))
             {
-                return BadRequest(new ApiResponse(400, "Invalid workout plan ID."));
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
             }
 
-            var response = await _workoutPlanRepo.DeleteWorkoutPlan(id);
+            var user = await _userService.FindByIdAsync(trainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {trainerId} not found in the database."));
+            }
+            var response = await _workoutPlanRepo.DeleteWorkoutPlan(id, trainerId);
             return HandleApiResponse(response);
         }
 
-        // GET: api/WorkoutPlans/{id}
+        [Authorize(Roles = "Trainer")]
+        [HttpGet("member/{membershipId}")]
+        public async Task<IActionResult> GetWorkoutPlansForMember(int membershipId)
+        {
+            var trainerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(trainerId))
+            {
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
+            }
+
+            var user = await _userService.FindByIdAsync(trainerId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {trainerId} not found in the database."));
+            }
+            var workoutPlans = await _workoutPlanRepo.GetWorkoutPlansForMember(membershipId, trainerId);
+            return Ok(new ApiResponse(200, "Workout plans retrieved successfully", workoutPlans));
+        }
+
+        [Authorize(Roles = "Member")]
+        [HttpGet("my-plans")]
+        public async Task<IActionResult> GetMyWorkoutPlans()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new ApiExceptionResponse(401, "User is not authenticated. Please log in."));
+            }
+
+            var user = await _userService.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new ApiExceptionResponse(404, $"User with ID {userId} not found in the database."));
+            }
+            var workoutPlans = await _workoutPlanRepo.GetMemberWorkoutPlans(userId);
+            return Ok(new ApiResponse(200, "Your workout plans retrieved successfully", workoutPlans));
+        }
+
+        [Authorize]
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetWorkoutPlan(int id)
+        public async Task<IActionResult> GetWorkoutPlanById(int id)
         {
-            if (id <= 0)
+            if (!IsValidId(id))
             {
-                return BadRequest(new ApiResponse(400, "Invalid workout plan ID."));
+                return BadRequest(CreateValidationError("Membership ID must be a positive integer."));
             }
 
-            var workoutPlan = await _workoutPlanRepo.GetWorkoutPlan(id);
-            if (workoutPlan == null)
-            {
-                return NotFound(new ApiResponse(404, $"Workout plan with ID {id} not found."));
-            }
+            var response = await _workoutPlanRepo.GetWorkoutPlanById(id);
+            return HandleApiResponse(response);
 
-            return Ok(new ApiResponse(200, "Workout plan retrieved successfully", workoutPlan));
         }
 
-        // GET: api/WorkoutPlans
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetWorkoutPlans()
+        #region Helper Methods
+        private bool IsValidId(int id) => id > 0;
+
+        private ApiValidationErrorResponse CreateValidationError(string message)
         {
-            try
+            return new ApiValidationErrorResponse
             {
-                var workoutPlans = await _workoutPlanRepo.GetWorkoutPlans();
-                return Ok(new ApiResponse(200, "Workout plans retrieved successfully", workoutPlans));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, "Error retrieving workout plans", ex.Message));
-            }
+                Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
+                StatusCode = 400,
+                Message = message
+            };
         }
-
-        // GET: api/WorkoutPlans/day/{dayOfWeek}
-        [HttpGet("day/{dayOfWeek}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetWorkoutPlansByDay(string dayOfWeek)
-        {
-            if (!Enum.TryParse<DayOfWeek>(dayOfWeek, true, out var day))
-            {
-                return BadRequest(new ApiResponse(400, "Invalid day of week."));
-            }
-
-            try
-            {
-                var workoutPlans = await _workoutPlanRepo.GetWorkoutPlansByDay(day);
-                return Ok(new ApiResponse(200, "Workout plans retrieved successfully", workoutPlans));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new ApiExceptionResponse(500, $"Error retrieving workout plans for day {dayOfWeek}", ex.Message));
-            }
-        }
-
         private IActionResult HandleApiResponse(ApiResponse response)
         {
             return response.StatusCode switch
@@ -142,10 +190,12 @@ namespace GymSystem.API.Controllers
                 200 => Ok(response),
                 201 => StatusCode(201, response),
                 400 => BadRequest(response),
+                403 => Forbid(),
                 404 => NotFound(response),
-                500 => StatusCode(StatusCodes.Status500InternalServerError, response),
-                _ => StatusCode(StatusCodes.Status500InternalServerError, response)
+                500 => StatusCode(500, response),
+                _ => StatusCode(500, response)
             };
         }
+        #endregion
     }
 }

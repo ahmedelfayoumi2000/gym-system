@@ -17,7 +17,8 @@ namespace GymSystem.BLL.Repositories
         private readonly AppIdentityDbContext _context;
         private Hashtable _repostories;
 
-        public UnitOfWork(AppIdentityDbContext context)
+        public UnitOfWork(AppIdentityDbContext
+            context)
         {
             _context = context;
         }

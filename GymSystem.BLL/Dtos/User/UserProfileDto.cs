@@ -8,8 +8,9 @@ namespace GymSystem.BLL.Dtos.User
 {
     public class UserProfileDto
     {
+        public string? ImageUrl { get; set; }
         public string FullName { get; set; }
-        public int Age { get; set; }
+        public uint Age { get; set; }
         public float Weight { get; set; }
         public float Height { get; set; }
         public string Email { get; set; }
@@ -18,5 +19,6 @@ namespace GymSystem.BLL.Dtos.User
         public string Goal { get; set; }
         public string FitnessLevel { get; set; }
         public bool IsProfileConfirmed { get; set; }
+        public List<string> Roles { get; set; }
     }
 }

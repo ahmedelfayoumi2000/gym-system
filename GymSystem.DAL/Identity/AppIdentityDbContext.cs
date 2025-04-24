@@ -51,5 +51,7 @@ namespace GymSystem.DAL.Identity
         public DbSet<Offer> Offers { get; set; }
         public DbSet<UserFavoriteExercise> UserFavoriteExercises { get; set; }
         public DbSet<GymSchedule> gymSchedules { get; set; }
+        public DbSet<GymScheduleDays> GymScheduleDays { get; set; }
+        public DbSet<UserDailyStats> UserDailyStats { get; set; }
     }
 }

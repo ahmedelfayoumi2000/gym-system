@@ -143,10 +143,5 @@ namespace GymSystem.API.Controllers
                 Message = message
             };
         }
-
-        private ActionResult<ApiResponse> HandleException(Exception ex)
-        {
-            return StatusCode(500, new ApiExceptionResponse(500, "An unexpected error occurred", ex.Message));
-        }
     }
 }

@@ -9,6 +9,9 @@ namespace GymSystem.BLL.Specifications.WorkoutPlanSpec
             : base(w => !w.IsDeleted)
         {
             AddIncludes(w => w.Exercises);
+            AddThenInclude(w => w.Exercises, e => e.ExerciseCategory);
+
+            AddOrderBy(w => w.DayOfWeek);
         }
     }
 }

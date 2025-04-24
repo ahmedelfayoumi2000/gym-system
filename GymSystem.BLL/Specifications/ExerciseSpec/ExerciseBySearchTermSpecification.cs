@@ -10,6 +10,10 @@ namespace GymSystem.BLL.Specifications.ExerciseSpec
                         (e.ExerciseName.ToLower().Contains(searchTerm.ToLower()) ||
                          e.Description.ToLower().Contains(searchTerm.ToLower())))
         {
+            AddIncludes(m => m.UserFavoriteExercises);
+            AddIncludes(m => m.WorkoutPlans);
+            AddIncludes(m => m.ExerciseCategory);
+
         }
     }
 }

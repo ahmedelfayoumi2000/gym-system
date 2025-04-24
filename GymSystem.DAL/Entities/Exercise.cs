@@ -18,11 +18,13 @@ namespace GymSystem.DAL.Entities
         public int Repetitions { get; set; }
         public int Sets { get; set; }
         public int DurationMinutes { get; set; } // الوقت الكلي للتمرين
+        public int? ExpectedCalories { get; set; }
+        public int RestTimeSeconds { get; set; }
         public bool IsDeleted { get; set; }
-        public int? WorkoutPlanId { get; set; }
-        public WorkoutPlan? WorkoutPlan { get; set; }
+        public ICollection<WorkoutPlan> WorkoutPlans { get; set; } = new HashSet<WorkoutPlan>();
         public int ExerciseCategoryId { get; set; }
         public ExerciseCategory ExerciseCategory { get; set; }
+        public ICollection<UserFavoriteExercise> UserFavoriteExercises { get; set; } = new HashSet<UserFavoriteExercise>();
     }
 
 }

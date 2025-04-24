@@ -1,5 +1,6 @@
 ﻿using GymSystem.BLL.Dtos.Offer;
 using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.Enums.Business;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -12,6 +13,7 @@ namespace GymSystem.BLL.Dtos.MonthlyMembership
     public class MonthlyMembershipViewDto
     {
         public int Id { get; set; }
+        public string? UserCode { get; set; }
         public string UserId { get; set; }
         public string UserName { get; set; }
         public string UserEmail { get; set; }
@@ -22,9 +24,9 @@ namespace GymSystem.BLL.Dtos.MonthlyMembership
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int? HaveDays { get; set; }
-
         public bool IsActive { get; set; }
-        public string? UserCode { get; set; }
+        public Goal? Goal { get; set; }
+        public FitnessLevel? FitnessLevel { get; set; }
 
     }
 }

@@ -9,6 +9,8 @@ using GymSystem.DAL.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GymSystem.DAL.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace GymSystem.BLL.Repositories.Business
 {
@@ -16,12 +18,87 @@ namespace GymSystem.BLL.Repositories.Business
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-
-        public NutritionPlanRepo(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IGenerativeAIService _aiService;
+        private readonly UserManager<AppUser> _userManager;
+        public NutritionPlanRepo(IUnitOfWork unitOfWork, IMapper mapper, IGenerativeAIService aiService , UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _aiService = aiService;
+            _userManager = userManager;
         }
+
+        public async Task<ApiResponse> GenerateNutritionPlanForUserAsync(int userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return new ApiResponse(404, $"User with ID {userId} not found.");
+                }
+
+                var aiInput = new AIInputData
+                {
+                    UserId = userId,
+                    Weight = user.Weight,
+                    Height = user.Height,
+                    Age = user.Age,
+                    Gender = user.Gender,
+                    FitnessLevel = user.FitnessLevel,
+                    Goal = user.Goal,
+                    //CaloriesTarget = user.CaloriesTarget,
+                    //MealsPerDay = user.MealsPerDay,
+                    //TrainingDaysPerWeek = user.TrainingDaysPerWeek
+                };
+
+                AIGeneratedPlan aiPlan;
+                try
+                {
+                    aiPlan = await _aiService.GeneratePlanAsync(aiInput);
+                }
+                catch (Exception ex)
+                {
+                    return new ApiResponse(503, $"Failed to generate nutrition plan using AI: {ex.Message}. Please add nutrition plan manually as a trainer.");
+                }
+
+                var nutritionPlan = new NutritionPlan
+                {
+                    //ينضافو فس الكلاس
+                    //UserId = userId,
+                    //Calories = aiPlan.NutritionPlan.Calories,
+                    IsDeleted = false
+                };
+
+                foreach (var aiMeal in aiPlan.NutritionPlan.Meals)
+                {
+                    var meal = new Meal
+                    {
+                        //لو هينضافو برضو
+                        //Name = aiMeal.Name,
+                        //Items = string.Join(", ", aiMeal.Items),
+                        //Calories = aiMeal.Calories,
+                        NutritionPlan = nutritionPlan
+                    };
+                    _unitOfWork.Repository<Meal>().Add(meal);
+                }
+
+                _unitOfWork.Repository<NutritionPlan>().Add(nutritionPlan);
+
+                var result = await _unitOfWork.Complete();
+                if (result <= 0)
+                {
+                    return new ApiResponse(500, "Failed to save nutrition plan to the database.");
+                }
+
+                return new ApiResponse(201, "Nutrition plan generated and saved successfully", _mapper.Map<NutritionPlanDto>(nutritionPlan));
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse(500, $"Error generating nutrition plan: {ex.Message}");
+            }
+        }
+    
 
         public async Task<ApiResponse> CreateNutritionPlan(NutritionPlanDto nutritionPlanDto)
         {

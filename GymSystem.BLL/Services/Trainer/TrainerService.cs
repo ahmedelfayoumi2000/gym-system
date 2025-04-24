@@ -26,7 +26,7 @@ namespace GymSystem.BLL.Services
         public async Task<TrainerDto> GetTrainerByIdAsync(string id)
         {
             var trainer = await _userManager.FindByIdAsync(id);
-            if (trainer == null || trainer.UserRole != 2) // UserRole 2 for Trainer
+            if (trainer == null || trainer.UserRole != 2) 
                 return null;
 
             return _mapper.Map<TrainerDto>(trainer);
@@ -41,6 +41,7 @@ namespace GymSystem.BLL.Services
         public async Task<TrainerDto> CreateTrainerAsync(CreateTrainerDto trainerDto)
         {
             var user = _mapper.Map<AppUser>(trainerDto);
+            user.EmailConfirmed = true;
 
             var result = await _userManager.CreateAsync(user, trainerDto.Password);
 
@@ -58,7 +59,7 @@ namespace GymSystem.BLL.Services
             if (trainer == null || trainer.UserRole != 2)
                 return false;
 
-            _mapper.Map(trainerDto, trainer); // Update properties using AutoMapper
+            _mapper.Map(trainerDto, trainer); 
 
             var result = await _userManager.UpdateAsync(trainer);
             return result.Succeeded;
@@ -94,7 +95,6 @@ namespace GymSystem.BLL.Services
                 return new ApiResponse(500, $"Failed to suspend trainer: {errors}");
             }
 
-            // إرجاع بيانات المدرب بعد التحديث
             var trainerData = new
             {
                 user.Id,

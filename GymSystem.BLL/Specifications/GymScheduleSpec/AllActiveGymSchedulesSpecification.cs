@@ -8,6 +8,7 @@ namespace GymSystem.BLL.Specifications.GymScheduleSpec
         public AllActiveGymSchedulesSpecification()
             : base(s => s.IsActive)
         {
+            AddIncludes(s => s.DaysOfWeek);
         }
     }
 }

@@ -20,7 +20,6 @@ namespace GymSystem.DAL.Entities
         public DateTime? StopDate { get; set; }
         public DateTime? LastStopDate { get; set; }  // آخر تاريخ تم فيه بدء الإيقاف
 
-        // علاقه عشان الموبيل
         public string? UserCode { get; set; }
         public string? UserId { get; set; }
         public AppUser? User { get; set; }
