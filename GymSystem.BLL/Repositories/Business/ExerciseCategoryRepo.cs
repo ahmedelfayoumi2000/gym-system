@@ -190,7 +190,7 @@ namespace GymSystem.BLL.Repositories
                     }
                     else
                     {
-                        return new ApiResponse(400, $"Failed to Upload Image: {uploadResult.Item2}"); // رسالة الخطأ
+                        return new ApiResponse(400, $"Failed to Upload Image: {uploadResult.Item2}"); 
                     }
                 }
 

@@ -12,6 +12,7 @@ using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,12 +78,12 @@ namespace GymSystem.BLL.Repositories.Business
                         return new ApiResponse(404, "User not found.");
                     }
 
-                    var order = _mapper.Map<Order>(orderCreateDto);
+                    var order = _mapper.Map<DAL.Entities.Order>(orderCreateDto);
                     order.CreatedByUserId = currentUserId;
                     order.ProductName = product.Name;
                     order.Total = product.Price * orderCreateDto.Count;
 
-                    await _unitOfWork.Repository<Order>().Add(order);
+                    await _unitOfWork.Repository<DAL.Entities.Order>().Add(order);
 
                     product.Count -= orderCreateDto.Count;
                     if (product.Count == 0)
@@ -120,7 +121,7 @@ namespace GymSystem.BLL.Repositories.Business
             try
             {
                 var spec = new AllOrdersSpecification();
-                var orders = await _unitOfWork.Repository<Order>().GetAllWithSpecAsync(spec);
+                var orders = await _unitOfWork.Repository<DAL.Entities.Order>().GetAllWithSpecAsync(spec);
                 var orderDtos = _mapper.Map<IEnumerable<OrderViewDto>>(orders);
 
                 foreach (var dto in orderDtos)
@@ -160,7 +161,7 @@ namespace GymSystem.BLL.Repositories.Business
                 try
                 {
                     var spec = new OrderByIdSpecification(orderId);
-                    var existingOrder = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+                    var existingOrder = await _unitOfWork.Repository<DAL.Entities.Order>().GetEntityWithSpecAsync(spec);
                     if (existingOrder == null)
                     {
                         return new ApiResponse(404, $"Order with ID {orderId} not found.");
@@ -172,7 +173,6 @@ namespace GymSystem.BLL.Repositories.Business
                         return new ApiResponse(404, "User not found.");
                     }
 
-                    // Check if the product still exists and is available
                     var productSpec = new ProductByIdAndActiveSpecification(existingOrder.ProductId);
                     var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(productSpec);
 
@@ -206,7 +206,7 @@ namespace GymSystem.BLL.Repositories.Business
                     existingOrder.CreatedAt = DateTime.UtcNow;
                     existingOrder.Total = product.Price * orderCreateDto.Count;
 
-                    _unitOfWork.Repository<Order>().Update(existingOrder);
+                    _unitOfWork.Repository<DAL.Entities.Order>().Update(existingOrder);
 
                     await RecordFinancialTransaction(existingOrder, TransactionType.Payment, currentUserId, existingTransaction);
 
@@ -232,7 +232,7 @@ namespace GymSystem.BLL.Repositories.Business
 
         #region Private Helper Methods
 
-        private async Task RecordFinancialTransaction(Order order, TransactionType transactionType, string userId, FinancialTransaction existingTransaction = null)
+        private async Task RecordFinancialTransaction(DAL.Entities.Order order, TransactionType transactionType, string userId, FinancialTransaction existingTransaction = null)
         {
             if (existingTransaction != null)
             {

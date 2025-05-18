@@ -36,12 +36,10 @@ namespace GymSystem.BLL.Repositories.Business
                 var recipes = await _unitOfWork.Repository<Recipe>().GetAllWithSpecAsync(spec);
                 var recipeDtos = _mapper.Map<IEnumerable<RecipeDto>>(recipes);
 
-                _logger.LogInformation("Retrieved {Count} active recipes.", recipeDtos.Count());
                 return recipeDtos;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving all recipes.");
                 throw new ApplicationException($"Failed to retrieve recipes: {ex.Message}", ex);
             }
         }
@@ -50,29 +48,24 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Invalid recipe ID: {Id}", id);
                 return null;
             }
 
             try
             {
-                _logger.LogInformation("Retrieving recipe with ID: {Id}", id);
 
                 var spec = new RecipeByIdSpecification(id);
                 var recipe = await _unitOfWork.Repository<Recipe>().GetEntityWithSpecAsync(spec);
                 if (recipe == null)
                 {
-                    _logger.LogWarning("Recipe with ID {Id} not found.", id);
                     return null;
                 }
 
                 var recipeDto = _mapper.Map<RecipeDto>(recipe);
-                _logger.LogInformation("Recipe retrieved successfully with ID: {Id}", id);
                 return recipeDto;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving recipe with ID: {Id}", id);
                 throw new ApplicationException($"Failed to retrieve recipe: {ex.Message}", ex);
             }
         }
@@ -81,12 +74,10 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Adding new recipe with name: {Name}", recipeDto.Name);
 
                 var mealCategory = await _unitOfWork.Repository<MealsCategory>().GetByIdAsync(recipeDto.MealsCategoryId);
                 if (mealCategory == null)
                 {
-                    _logger.LogWarning("MealsCategory with ID {Id} not found.", recipeDto.MealsCategoryId);
                     throw new ApplicationException("Invalid MealsCategory ID");
                 }
 
@@ -98,18 +89,15 @@ namespace GymSystem.BLL.Repositories.Business
 
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to save recipe to database.");
                     throw new ApplicationException("Failed to save recipe");
                 }
 
                 var createdDto = _mapper.Map<RecipeDto>(recipeEntity);
                 createdDto.MealsCategoryName = mealCategory.CategoryName;
-                _logger.LogInformation("Recipe added successfully with ID: {Id}", recipeEntity.Id);
                 return createdDto;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding recipe.");
                 throw new ApplicationException($"Failed to add recipe: {ex.Message}", ex);
             }
         }

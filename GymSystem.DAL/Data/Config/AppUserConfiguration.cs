@@ -2,6 +2,7 @@
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection.Emit;
 
 namespace GymSystem.DAL.Data.Config
 {
@@ -9,6 +10,9 @@ namespace GymSystem.DAL.Data.Config
     {
         public void Configure(EntityTypeBuilder<AppUser> builder)
         {
+
+            builder.Property(u => u.Salary)
+                   .HasPrecision(18, 2);
             builder.HasIndex(u => u.DisplayName).IsUnique();
 
             builder.HasMany(u => u.WorkoutPlans)
@@ -40,6 +44,5 @@ namespace GymSystem.DAL.Data.Config
 
             builder.HasIndex(u => u.DisplayName).IsUnique(false);
         }
-       
     }
 }

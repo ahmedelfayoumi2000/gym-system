@@ -7,5 +7,6 @@ namespace GymSystem.BLL.Interfaces
     {
         Task DeleteImageAsync(string imageFileName);
         Task<Tuple<int, string>> UploadImageAsync(IFormFile imageFile);
+        Task<byte[]> GetImageAsync(string imageName);
     }
 }

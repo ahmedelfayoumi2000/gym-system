@@ -55,7 +55,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+
         [Authorize(Roles = "Admin,Trainer")]
         [HttpGet("getAllFeedbacks")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -74,7 +74,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+
         [Authorize(Roles = "Member")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -108,7 +108,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-      
+
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -144,7 +144,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-       
+
         [Authorize(Roles = "Member")]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

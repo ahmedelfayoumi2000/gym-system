@@ -7,7 +7,7 @@ using System.Security;
 using System.Security.Claims;
 namespace GymSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Receptionist")]
     public class FinancialTransactionController : BaseApiController
     {
         private readonly IFinancialTransactionService _financialTransactionService;

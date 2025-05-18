@@ -10,12 +10,12 @@ namespace GymSystem.DAL.Entities.Enums.Business
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DayOfWeekEnum
     {
-        Saturday,
-        Sunday,
-        Monday,
-        Tuesday,
-        Wednesday,
-        Thursday,
-        Friday
+        Sunday = 0,
+        Monday = 1,
+        Tuesday = 2,
+        Wednesday = 3,
+        Thursday = 4,
+        Friday = 5,
+        Saturday = 6
     }
 }

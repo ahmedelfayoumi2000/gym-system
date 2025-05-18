@@ -1,20 +1,17 @@
 ﻿using GymSystem.DAL.Entities.Enums.Business;
-using System;
+using GymSystem.DAL.Entities.Identity;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GymSystem.BLL.Interfaces.Business
 {
     public interface IGenerativeAIService
     {
-        Task<AIGeneratedPlan> GeneratePlanAsync(AIInputData inputData);
+        Task<AIGeneratedPlan> GeneratePlanAsync(AppUser user, string userId);
     }
 
     public class AIInputData
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public float? Weight { get; set; }
         public float? Height { get; set; }
         public uint? Age { get; set; }
@@ -30,14 +27,20 @@ namespace GymSystem.BLL.Interfaces.Business
     {
         public List<AIExercise> Exercises { get; set; }
         public AINutritionPlan NutritionPlan { get; set; }
+        public bool UsedDefaultValues { get; set; }
+        public string WarmUp { get; set; }
+        public string CoolDown { get; set; }
+        public List<string> AdditionalNotes { get; set; }
     }
 
     public class AIExercise
     {
         public string Name { get; set; }
         public int Sets { get; set; }
-        public int Reps { get; set; }
+        public int Reps { get; set; } // For backward compatibility, but we'll use RepsText
+        public string RepsText { get; set; } // To store the original Reps string like "10-12" or "45 seconds"
         public string Category { get; set; }
+        public string Day { get; set; }
     }
 
     public class AINutritionPlan
@@ -49,7 +52,9 @@ namespace GymSystem.BLL.Interfaces.Business
     public class AIMeal
     {
         public string Name { get; set; }
+        public string MealType { get; set; } 
         public List<string> Items { get; set; }
         public int Calories { get; set; }
+        public string Day { get; set; }
     }
 }

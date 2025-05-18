@@ -8,9 +8,11 @@ using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using GymSystem.BLL.Specifications.MembershipSpec;
+using GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
@@ -137,6 +139,7 @@ namespace GymSystem.BLL.Repositories.Business
                     if (result <= 0)
                     {
                         transactionScope.Dispose();
+                        await _userManager.DeleteAsync(user);
                         return new ApiResponse(500, "Failed to save the monthly membership to the database.");
                     }
 
@@ -296,6 +299,13 @@ namespace GymSystem.BLL.Repositories.Business
                 var roles = await _userManager.GetRolesAsync(user);
                 var UserProfile = _mapper.Map<UserProfileDto>(user);
                 UserProfile.Roles = roles.ToList();
+                if (roles.Contains("Member"))
+                {
+                    var spec = new MonthlyMembershipWithRelationsSpecification(m => m.UserId == userId);
+                    var membership = await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec);
+                    UserProfile.StartDate = membership.StartDate;
+                    UserProfile.EndDate = membership.EndDate;
+                }
 
                 return UserProfile;
             }
@@ -310,31 +320,69 @@ namespace GymSystem.BLL.Repositories.Business
         {
             var user = await _userService.FindByIdAsync(userId) ?? throw new SecurityException("User not found.");
 
-
-
             _mapper.Map(profileDto, user);
-            if (profileDto.Image != null)
+
+
+            if (profileDto.Image != null && profileDto.Image.Length > 0)
             {
 
                 if (!string.IsNullOrEmpty(user.ProfileImageName))
                 {
-                    await _imageService.DeleteImageAsync(user.ProfileImageName);
-                }
-                var uploadResult = await _imageService.UploadImageAsync(profileDto.Image);
-                if (uploadResult.Item1 == 1)
-                {
-                    user.ProfileImageName = uploadResult.Item2;
+
+                    var existingImage = await _imageService.GetImageAsync(user.ProfileImageName);
+                    if (existingImage != null && AreImagesEqual(existingImage, profileDto.Image))
+                    {
+                        // Continue to update other profile data
+                    }
+                    else
+                    {
+
+                        await _imageService.DeleteImageAsync(user.ProfileImageName);
+
+                        // Upload the new image
+                        var uploadResult = await _imageService.UploadImageAsync(profileDto.Image);
+                        if (uploadResult.Item1 == 1)
+                        {
+                            user.ProfileImageName = uploadResult.Item2;
+                        }
+                        else
+                        {
+                            throw new ApplicationException($"Failed to Upload Image: {uploadResult.Item2}");
+                        }
+                    }
                 }
                 else
                 {
-                    throw new ApplicationException($"Failed to Upload Image: {uploadResult.Item2}");
+                    // No existing image, just upload the new one
+                    var uploadResult = await _imageService.UploadImageAsync(profileDto.Image);
+                    if (uploadResult.Item1 == 1)
+                    {
+                        user.ProfileImageName = uploadResult.Item2;
+                    }
+                    else
+                    {
+                        throw new ApplicationException($"Failed to Upload Image: {uploadResult.Item2}");
+                    }
                 }
+
+            }
+            var userprofile = _mapper.Map<UserProfileDto>(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            userprofile.Roles = roles.ToList();
+
+            if (roles.Contains("Member"))
+            {
+                var spec = new MonthlyMembershipWithRelationsSpecification(m => m.UserId == userId);
+                var membership = await _unitOfWork.Repository<Membership>().GetEntityWithSpecAsync(spec);
+                userprofile.StartDate = membership.StartDate;
+                userprofile.EndDate = membership.EndDate;
             }
 
             var result = await _userService.UpdateAsync(user);
             return result.Succeeded
-                ? new ApiResponse(200, "Profile updated successfully", _mapper.Map<UserProfileDto>(user))
+                ? new ApiResponse(200, "Profile updated successfully", userprofile)
                 : new ApiResponse(400, "Failed to update profile.", result.Errors.Select(e => e.Description));
+
         }
 
         public async Task<ApiResponse> UpdateGoalAsync(string userId, UpdateGoalDto goalDto)
@@ -554,6 +602,7 @@ namespace GymSystem.BLL.Repositories.Business
             var roleResult = await _userService.AddToRoleAsync(newUser, roleName);
             if (!roleResult.Succeeded)
             {
+                await _userManager.DeleteAsync(newUser);
                 throw new InvalidOperationException("Failed to assign role to user: " + string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
 
@@ -691,6 +740,27 @@ namespace GymSystem.BLL.Repositories.Business
             return hasChanges;
         }
 
+        private bool AreImagesEqual(byte[] image1, IFormFile image2)
+        {
+            // Convert IFormFile to byte array
+            using (var memoryStream = new MemoryStream())
+            {
+                image2.CopyTo(memoryStream);
+                var image2Bytes = memoryStream.ToArray();
+
+                // Compare the two byte arrays
+                if (image1.Length != image2Bytes.Length)
+                    return false;
+
+                for (int i = 0; i < image1.Length; i++)
+                {
+                    if (image1[i] != image2Bytes[i])
+                        return false;
+                }
+
+                return true;
+            }
+        }
         #endregion
     }
 }

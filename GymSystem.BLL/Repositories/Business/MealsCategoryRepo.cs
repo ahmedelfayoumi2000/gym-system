@@ -33,19 +33,16 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (mealsCategory == null)
             {
-                _logger.LogWarning("Attempted to add a null MealsCategoryDto.");
                 return new ApiResponse(400, "Meals category data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Attempting to add meals category with name: {CategoryName}", mealsCategory.CategoryName);
 
                 var spec = new MealsCategoryByNameSpecification(mealsCategory.CategoryName);
                 var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (existingCategory != null)
                 {
-                    _logger.LogWarning("Meals category with name {CategoryName} already exists.", mealsCategory.CategoryName);
                     return new ApiResponse(409, $"Meals category '{mealsCategory.CategoryName}' already exists.");
                 }
 
@@ -53,12 +50,10 @@ namespace GymSystem.BLL.Repositories.Business
                 await _unitOfWork.Repository<MealsCategory>().Add(categoryEntity);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meals category {CategoryName} added successfully with ID: {Id}", mealsCategory.CategoryName, categoryEntity.Id);
                 return new ApiResponse(201, "Meals category added successfully", _mapper.Map<MealsCategoryDto>(categoryEntity));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding meals category with name: {CategoryName}", mealsCategory.CategoryName);
                 return new ApiResponse(500, $"Failed to add meals category: {ex.Message}");
             }
         }
@@ -67,7 +62,6 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Attempting to delete meals category with ID: {Id}", mealsCategoryId);
 
                 var spec = new MealsCategoryByIdSpecification(mealsCategoryId);
                 var category = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
@@ -81,12 +75,10 @@ namespace GymSystem.BLL.Repositories.Business
                 _unitOfWork.Repository<MealsCategory>().Update(category);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meals category with ID {Id} deleted successfully.", mealsCategoryId);
                 return new ApiResponse(200, "Meals category deleted successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting meals category with ID: {Id}", mealsCategoryId);
                 return new ApiResponse(500, $"Failed to delete meals category: {ex.Message}");
             }
         }
@@ -95,18 +87,15 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Retrieving all active meals categories.");
 
                 var spec = new AllMealsCategoriesSpecification();
                 var categories = await _unitOfWork.Repository<MealsCategory>().GetAllWithSpecAsync(spec);
                 var categoryDtos = _mapper.Map<IEnumerable<MealsCategoryDto>>(categories);
 
-                _logger.LogInformation("Retrieved {Count} active meals categories.", categoryDtos.Count());
                 return categoryDtos;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving all meals categories.");
                 throw new ApplicationException($"Failed to retrieve meals categories: {ex.Message}", ex);
             }
         }
@@ -115,23 +104,19 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Retrieving meals category with ID: {Id}", mealsCategoryId);
 
                 var spec = new MealsCategoryByIdSpecification(mealsCategoryId);
                 var category = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (category == null)
                 {
-                    _logger.LogWarning("Meals category with ID {Id} not found.", mealsCategoryId);
                     return null;
                 }
 
                 var categoryDto = _mapper.Map<MealsCategoryDto>(category);
-                _logger.LogInformation("Meals category with ID {Id} retrieved successfully.", mealsCategoryId);
                 return categoryDto;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving meals category with ID: {Id}", mealsCategoryId);
                 throw new ApplicationException($"Failed to retrieve meals category: {ex.Message}", ex);
             }
         }
@@ -140,32 +125,27 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (mealsCategory == null)
             {
-                _logger.LogWarning("Attempted to update meals category with null MealsCategoryDto.");
                 return new ApiResponse(400, "Meals category data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Attempting to update meals category with ID: {Id}", mealsCategory.MealsCategoryId);
 
                 var spec = new MealsCategoryByIdSpecification(mealsCategory.MealsCategoryId);
                 var existingCategory = await _unitOfWork.Repository<MealsCategory>().GetEntityWithSpecAsync(spec);
                 if (existingCategory == null)
                 {
-                    _logger.LogWarning("Meals category with ID {Id} not found or already deleted.", mealsCategory.MealsCategoryId);
                     return new ApiResponse(404, $"Meals category with ID {mealsCategory.MealsCategoryId} not found.");
                 }
 
-                _mapper.Map(mealsCategory, existingCategory); // Map DTO to existing entity
+                _mapper.Map(mealsCategory, existingCategory);
                 _unitOfWork.Repository<MealsCategory>().Update(existingCategory);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meals category with ID {Id} updated successfully.", mealsCategory.MealsCategoryId);
                 return new ApiResponse(200, "Meals category updated successfully", _mapper.Map<MealsCategoryDto>(existingCategory));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating meals category with ID: {Id}", mealsCategory.MealsCategoryId);
                 return new ApiResponse(500, $"Failed to update meals category: {ex.Message}");
             }
         }

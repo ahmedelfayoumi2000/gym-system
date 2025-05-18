@@ -26,7 +26,7 @@ namespace GymSystem.BLL.Services
         public async Task<TrainerDto> GetTrainerByIdAsync(string id)
         {
             var trainer = await _userManager.FindByIdAsync(id);
-            if (trainer == null || trainer.UserRole != 2) 
+            if (trainer == null || trainer.UserRole != 2) // UserRole 2 for Trainer
                 return null;
 
             return _mapper.Map<TrainerDto>(trainer);
@@ -40,17 +40,40 @@ namespace GymSystem.BLL.Services
 
         public async Task<TrainerDto> CreateTrainerAsync(CreateTrainerDto trainerDto)
         {
-            var user = _mapper.Map<AppUser>(trainerDto);
-            user.EmailConfirmed = true;
+            AppUser user = null;
 
-            var result = await _userManager.CreateAsync(user, trainerDto.Password);
+            try
+            {
+                user = _mapper.Map<AppUser>(trainerDto);
+                user.EmailConfirmed = true;
 
-            if (!result.Succeeded)
-                throw new Exception("Failed to create trainer.");
+                var result = await _userManager.CreateAsync(user, trainerDto.Password);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new Exception($"Failed to create trainer: {errors}");
+                }
 
-            await _userManager.AddToRoleAsync(user, "Trainer");
+                var roleResult = await _userManager.AddToRoleAsync(user, "Trainer");
+                if (!roleResult.Succeeded)
+                {
+                    var deleteResult = await _userManager.DeleteAsync(user);
+                    if (!deleteResult.Succeeded)
+                    {
+                        var deleteErrors = string.Join(", ", deleteResult.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to delete user after role assignment failure: {deleteErrors}");
+                    }
 
-            return _mapper.Map<TrainerDto>(user);
+                    var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    throw new Exception($"Failed to assign Trainer role: {roleErrors}");
+                }
+
+                return _mapper.Map<TrainerDto>(user);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error creating trainer: {ex.Message}", ex);
+            }
         }
 
         public async Task<bool> UpdateTrainerAsync(string id, UpdateTrainerDto trainerDto)
@@ -59,7 +82,7 @@ namespace GymSystem.BLL.Services
             if (trainer == null || trainer.UserRole != 2)
                 return false;
 
-            _mapper.Map(trainerDto, trainer); 
+            _mapper.Map(trainerDto, trainer); // Update properties using AutoMapper
 
             var result = await _userManager.UpdateAsync(trainer);
             return result.Succeeded;

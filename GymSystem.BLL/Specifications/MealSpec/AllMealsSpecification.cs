@@ -10,4 +10,4 @@ namespace GymSystem.BLL.Specifications.MealSpec
         {
         }
     }
-}   
+}

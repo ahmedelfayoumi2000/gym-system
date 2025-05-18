@@ -10,6 +10,7 @@ namespace GymSystem.BLL.Specifications.UserFavoriteExerciseSpec
         {
             AddIncludes(c => c.Exercises);
             AddThenInclude(w => w.Exercises, e => e.ExerciseCategory);
+
         }
     }
 }

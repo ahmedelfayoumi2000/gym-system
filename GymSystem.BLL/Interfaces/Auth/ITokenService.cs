@@ -10,8 +10,6 @@ namespace GymSystem.BLL.Interfaces.Auth
 {
     public interface ITokenService
     {
-        //Task<string> CreateToken(AppUser user, UserManager<AppUser> userManager);
-
         Task<(string, RefreshToken)> CreateTokenAsync(AppUser user);
         Task<(string, RefreshToken)> RefreshTokenAsync(string refreshToken);
         Task<bool> RevokeTokenAsync(string refreshToken);

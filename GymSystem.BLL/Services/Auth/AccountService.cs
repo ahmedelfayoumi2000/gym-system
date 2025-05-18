@@ -477,13 +477,14 @@ namespace GymSystem.BLL.Services.Auth
                 UserRoleEnum.Trainer => "Trainer",
                 UserRoleEnum.Member => "Member",
                 UserRoleEnum.Receptionist => "Receptionist",
+                UserRoleEnum.User => "User",
                 _ => throw new ArgumentException("Invalid user role", nameof(role))
             };
         }
 
         private string BuildEmailBody(string username, string callbackUrl)
         {
-            return $"<h1>Dear {username}! Welcome to ATHLETIC GYM.</h1>" +
+            return $"<h1>Dear {username}! Welcome to Eagle GYM.</h1>" +
                    $"<p>Please <a href='{callbackUrl}'>Click Here</a> to confirm your email.</p>";
         }
         #endregion

@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using GymSystem.BLL.Repositories.Business;
 using GymSystem.BLL.Repositories;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using GymSystem.BLL.Services.Business;
 using AspNetCoreRateLimit;
 
@@ -73,20 +72,17 @@ namespace GymSystem.API.Extentions
             services.AddScoped<IExerciseCategoryRepo, ExerciseCategoryRepo>();
             services.AddScoped<IGymScheduleRepo, GymScheduleRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IDashboardRepo, DashboardRepository>();
 
             services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
             services.AddScoped<IWorkoutPlanRepo, WorkoutPlanRepo>();
             services.AddScoped<IExerciseRepo, ExerciseRepo>();
             services.AddSingleton<PlanValidator>();
 
-            // إعداد Rate Limiting
             services.AddMemoryCache();
             services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
             services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-
-            //services.AddScoped<INotificationRepo, NotificationRepo>();
-
 
 
 

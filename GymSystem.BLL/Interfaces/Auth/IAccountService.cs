@@ -1,5 +1,4 @@
-﻿using GymSystem.BLL.Dtos.User;
-using GymSystem.BLL.Errors;
+﻿using GymSystem.BLL.Errors;
 using GymSystem.DAL.Entities.Identity;
 
 namespace GymSystem.BLL.Interfaces.Auth
@@ -15,6 +14,6 @@ namespace GymSystem.BLL.Interfaces.Auth
         Task<ApiResponse> ResetPasswordAsync(ResetPassword dto);
         Task<ApiResponse> ChangePasswordAsync(Guid userId, string oldPassword, string newPassword);
         Task<ApiResponse> ResendConfirmationEmailAsync(string email, Func<string, string, string> generateCallBackUrl);
-        Task<ApiResponse> LogoutAsync(string userId); 
+        Task<ApiResponse> LogoutAsync(string userId);
     }
 }

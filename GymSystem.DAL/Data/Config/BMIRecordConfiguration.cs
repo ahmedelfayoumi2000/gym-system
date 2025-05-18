@@ -22,7 +22,7 @@ namespace GymSystem.DAL.Data.Config
 
             builder.Property(b => b.Category)
                 .IsRequired()
-                .HasConversion<string>(); // Storing enum as string
+                .HasConversion<string>(); 
 
             builder.Property(b => b.MeasurementDate)
                 .IsRequired()
@@ -38,7 +38,6 @@ namespace GymSystem.DAL.Data.Config
 
             builder.Property(b => b.HeightInMeters)
                 .IsRequired()
-                //by cm not meter
                 .HasPrecision(5, 2);//from 0 to 999.99
 
             builder.HasOne(b => b.User)

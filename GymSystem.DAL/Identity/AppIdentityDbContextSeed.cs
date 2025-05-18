@@ -1,6 +1,8 @@
 ﻿using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.Enums.Business;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,10 +11,36 @@ namespace GymSystem.DAL.Identity
 {
     public static class AppIdentityDbContextSeed
     {
-        public static async Task SeedAsync(UserManager<AppUser> userManager)
+        public static async Task SeedAsync(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
         {
+            await SeedRolesAsync(roleManager);
             await SeedAdminUserAsync(userManager);
 
+        }
+
+        private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+        {
+            if (!await roleManager.Roles.AnyAsync())
+            {
+                var roles = new[]
+                {
+                    new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" },
+                    new IdentityRole { Id = "2", Name = "Trainer", NormalizedName = "TRAINER" },
+                    new IdentityRole { Id = "3", Name = "Member", NormalizedName = "MEMBER" },
+                    new IdentityRole { Id = "4", Name = "User", NormalizedName = "USER" },
+                    new IdentityRole { Id = "5", Name = "Receptionist", NormalizedName = "RECEPTIONIST" }
+                };
+
+                foreach (var role in roles)
+                {
+                    var result = await roleManager.CreateAsync(role);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to create role {role.Name}: {errors}");
+                    }
+                }
+            }
         }
 
         private static async Task SeedAdminUserAsync(UserManager<AppUser> userManager)

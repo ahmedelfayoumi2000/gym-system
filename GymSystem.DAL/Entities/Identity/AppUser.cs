@@ -23,6 +23,9 @@ namespace GymSystem.DAL.Entities.Identity
         public bool? IsProfileConfirmed { get; set; }
         public Goal? Goal { get; set; }
         public FitnessLevel? FitnessLevel { get; set; }
+        public int? CaloriesTarget { get; set; } 
+        public int? MealsPerDay { get; set; }
+        public int? TrainingDaysPerWeek { get; set; } 
 
         public MembershipType MembershipType { get; set; }
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

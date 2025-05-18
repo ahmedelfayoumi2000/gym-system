@@ -5,6 +5,7 @@ using GymSystem.BLL.Interfaces;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using GymSystem.BLL.Specifications.MembershipSpec;
+using GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci;
 using GymSystem.BLL.Specifications.WorkoutPlanSpec;
 using GymSystem.DAL.Entities;
 using GymSystem.DAL.Entities.Identity;
@@ -48,6 +49,7 @@ namespace GymSystem.BLL.Repositories.Business
                 if (membership == null)
                     return new ApiResponse(404, "Membership not found.");
 
+                // التحقق من عدم وجود خطة أخرى لنفس الـ Membership في نفس اليوم
                 var existingPlanSpec = new WorkoutPlansByDaySpecification(workoutPlanDto.DayOfWeek, null, workoutPlanDto.MembershipId);
                 var existingPlans = await _unitOfWork.Repository<WorkoutPlan>().GetAllWithSpecAsync(existingPlanSpec);
                 if (existingPlans.Any())
@@ -72,6 +74,7 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
+        // تعديل دالة إضافة التمرين
         public async Task<ApiResponse> AddExerciseToWorkoutPlan(int workoutPlanId, int exerciseId, int membershipId, string trainerId)
         {
             try
@@ -84,6 +87,7 @@ namespace GymSystem.BLL.Repositories.Business
                 if (workoutPlan == null)
                     return new ApiResponse(404, $"Workout plan with ID {workoutPlanId} not found.");
 
+                // التحقق إن الـ WorkoutPlan مرتبطة بالـ Membership المحدد
                 if (workoutPlan.MembershipId != membershipId)
                     return new ApiResponse(400, $"Workout plan {workoutPlanId} does not belong to Membership {membershipId}.");
 

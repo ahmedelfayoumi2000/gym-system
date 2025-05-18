@@ -1,4 +1,6 @@
-﻿using GymSystem.BLL.Dtos.Equipment;
+﻿using GymSystem.API.Helpers;
+using GymSystem.BLL.Dtos.Equipment;
+using GymSystem.BLL.Dtos.MonthlyMembership;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
@@ -10,9 +12,6 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    /// <summary>
-    /// اضافة صنف
-    /// </summary>
     [Authorize(Roles = "Admin,Receptionist")]
     public class EquipmentController : BaseApiController
     {
@@ -26,12 +25,14 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllEquipments([FromQuery] SpecPrams specParams)
+        public async Task<IActionResult> GetAllEquipments([FromQuery] SpecPrams specParams = null)
         {
             try
             {
-                var equipments = await _equipmentRepo.GetAllAsync(specParams);
-                return Ok(new ApiResponse(200, "Equipments retrieved successfully", equipments));
+                var data = await _equipmentRepo.GetAllAsync(specParams);
+                var totalCount = data.Count();
+
+                return Ok(new ApiResponse(200, "Equipments retrieved successfully", new Pagination<EquipmentViewDto>(specParams.PageIndex, specParams.PageSize, totalCount, data)));
             }
             catch (Exception ex)
             {

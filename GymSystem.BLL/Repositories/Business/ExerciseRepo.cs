@@ -6,9 +6,11 @@ using GymSystem.BLL.Interfaces.Business;
 using GymSystem.BLL.Specifications;
 using GymSystem.BLL.Specifications.ExerciseSpec;
 using GymSystem.BLL.Specifications.MembershipSpec;
+using GymSystem.BLL.Specifications.MonthlyMembershipWithRelationsSpeci;
 using GymSystem.BLL.Specifications.UserFavoriteExerciseSpec;
 using GymSystem.BLL.Specifications.WorkoutPlanSpec;
 using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.AI;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -43,55 +45,29 @@ namespace GymSystem.BLL.Repositories.Business
             _aiService = aiService;
         }
 
-
-        public async Task<ApiResponse> GenerateExercisesForUserAsync(int userId)
+        public async Task<ApiResponse> GenerateExercisesForUserAsync(string userId, List<AIExercise> aiExercises)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return new ApiResponse(404, $"User with ID {userId} not found.");
                 }
 
-                var aiInput = new AIInputData
+                var exercises = aiExercises.Select(aiExercise => new ExerciseAi
                 {
-                    UserId = userId,
-                    Weight = user.Weight,
-                    Height = user.Height,
-                    Age = user.Age,
-                    Gender = user.Gender,
-                    FitnessLevel = user.FitnessLevel,
-                    Goal = user.Goal,
-                    //لو هنضفهم في ال AppUser
-                    //CaloriesTarget = user.CaloriesTarget,
-                    //MealsPerDay = user.MealsPerDay,
-                    //TrainingDaysPerWeek = user.TrainingDaysPerWeek
-                };
-                AIGeneratedPlan aiPlan;
-                try
-                {
-                    aiPlan = await _aiService.GeneratePlanAsync(aiInput);
-                }
-                catch (Exception ex)
-                {
-                    return new ApiResponse(503, $"Failed to generate exercises using AI: {ex.Message}. Please add exercises manually as a trainer.");
-                }
-
-                var exercises = aiPlan.Exercises.Select(aiExercise => new Exercise
-                {
+                    Name = aiExercise.Name,
                     Sets = aiExercise.Sets,
-                    //لو هنضفهم برضو
-                    //Name = aiExercise.Name,
-                    //Reps = aiExercise.Reps,
-                    //Category = aiExercise.Category,
-                    //UserId = userId,
+                    Reps = aiExercise.Reps,
+                    Category = aiExercise.Category,
+                    UserId = userId,
                     IsDeleted = false
                 }).ToList();
 
                 foreach (var exercise in exercises)
                 {
-                    _unitOfWork.Repository<Exercise>().Add(exercise);
+                    _unitOfWork.Repository<ExerciseAi>().Add(exercise);
                 }
 
                 var result = await _unitOfWork.Complete();
@@ -107,7 +83,6 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiResponse(500, $"Error generating exercises: {ex.Message}");
             }
         }
-    
 
         public async Task<ExerciseDto> AddExerciseAsync(ExerciseDto exerciseDto)
         {
@@ -340,6 +315,29 @@ namespace GymSystem.BLL.Repositories.Business
             }
         }
 
+        public async Task<IEnumerable<ExerciseDto>> GetAllExercisesAsync()
+        {
+            try
+            {
+                var exercises = await _unitOfWork.Repository<Exercise>().GetAllAsync();
+
+                if (exercises == null || !exercises.Any())
+                {
+                    return new List<ExerciseDto>(); // نرجع قايمة فاضية بدل null
+                }
+
+                var exerciseDtos = _mapper.Map<IEnumerable<ExerciseDto>>(exercises);
+                _logger.LogInformation("Successfully retrieved {Count} exercises.", exerciseDtos.Count());
+
+                return exerciseDtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve exercises.");
+                throw new ApplicationException($"Failed to retrieve exercises: {ex.Message}", ex);
+            }
+        }
+
         public async Task<IEnumerable<ExerciseDto>> GetFavoritesAsync(string userId)
         {
             if (string.IsNullOrEmpty(userId))
@@ -480,6 +478,5 @@ namespace GymSystem.BLL.Repositories.Business
                 throw new ApplicationException($"Failed to retrieve exercises: {ex.Message}", ex);
             }
         }
-
     }
 }

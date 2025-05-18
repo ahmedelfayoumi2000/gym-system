@@ -8,6 +8,7 @@ namespace GymSystem.BLL.Specifications.NutritionPlanSpec
         public NutritionPlanByIdWithoutDeletedCheckSpecification(int nutritionPlanId)
             : base(x => x.Id == nutritionPlanId)
         {
+
         }
     }
 }

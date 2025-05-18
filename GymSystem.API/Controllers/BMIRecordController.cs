@@ -33,11 +33,9 @@ namespace GymSystem.API.Controllers
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
                 if (userIdClaim == null)
                 {
-                    _logger.LogWarning("UserId claim not found in token for GetBMIRecordsForUser request.");
                     return BadRequest(new ApiResponse(400, "UserId claim not found in the token"));
                 }
 
-                _logger.LogInformation("Fetching BMI records for UserId: {UserId} by user with role: {Roles}", userIdClaim.Value, User.FindFirst(ClaimTypes.Role)?.Value);
                 var result = await _bMIRecordRepo.GetBMIRecordsForUser(userIdClaim.Value);
                 return Ok(new ApiResponse(200, "BMI records retrieved successfully", result));
             }
@@ -57,7 +55,6 @@ namespace GymSystem.API.Controllers
         {
             if (!ModelState.IsValid || bmiRecord == null)
             {
-                _logger.LogWarning("Invalid model state or null data for AddBMIRecord.");
                 return BadRequest(CreateValidationErrorResponse("Invalid BMI record data"));
             }
 
@@ -70,7 +67,6 @@ namespace GymSystem.API.Controllers
                     return BadRequest(new ApiResponse(400, "UserId claim not found in the token"));
                 }
 
-                _logger.LogInformation("Adding BMI record for UserId: {UserId} by user with role: {Roles}", bmiRecord.UserId, User.FindFirst(ClaimTypes.Role)?.Value);
                 var result = await _bMIRecordRepo.AddBMIRecord(bmiRecord);
                 if (result.StatusCode == 200)
                 {
@@ -78,12 +74,10 @@ namespace GymSystem.API.Controllers
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Failed to add BMI record for UserId: {UserId}: {Message}", bmiRecord.UserId, result.Message);
                 return BadRequest(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding BMI record for UserId: {UserId}", bmiRecord?.UserId);
                 return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while adding BMI record", ex.Message));
             }
         }
@@ -98,7 +92,6 @@ namespace GymSystem.API.Controllers
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Invalid BMI record ID provided for DeleteBMIRecord: {Id}", id);
                 return BadRequest(new ApiValidationErrorResponse
                 {
                     Errors = new List<string> { "BMI record ID must be a positive integer." },
@@ -109,27 +102,22 @@ namespace GymSystem.API.Controllers
 
             try
             {
-                _logger.LogInformation("Deleting BMI record with ID: {Id} by user with role: {Roles}", id, User.FindFirst(ClaimTypes.Role)?.Value);
                 var result = await _bMIRecordRepo.DeleteBMIRecord(id);
 
                 if (result.StatusCode == 200)
                 {
-                    _logger.LogInformation("BMI record deleted successfully with ID: {Id}", id);
                     return Ok(result);
                 }
 
                 if (result.StatusCode == 404)
                 {
-                    _logger.LogWarning("BMI record with ID {Id} not found.", id);
                     return NotFound(result);
                 }
 
-                _logger.LogWarning("Failed to delete BMI record with ID: {Id}: {Message}", id, result.Message);
                 return BadRequest(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting BMI record with ID: {Id}", id);
                 return StatusCode(500, new ApiExceptionResponse(500, "An error occurred while deleting BMI record", ex.Message));
             }
         }
@@ -142,6 +130,11 @@ namespace GymSystem.API.Controllers
                 StatusCode = 400,
                 Message = message
             };
+        }
+
+        private ActionResult<ApiResponse> HandleException(Exception ex)
+        {
+            return StatusCode(500, new ApiExceptionResponse(500, "An unexpected error occurred", ex.Message));
         }
     }
 }

@@ -11,8 +11,8 @@ namespace GymSystem.DAL.Entities
     {
         public string? Comments { get; set; }
         public int Rating { get; set; }
-        public string UserId { get; set; }
-        public AppUser User { get; set; }
+        public string? UserId { get; set; }
+        public AppUser? User { get; set; }
         public string TrainerId { get; set; }
     }
 }

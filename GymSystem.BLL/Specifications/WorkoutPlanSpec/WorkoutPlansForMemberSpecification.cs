@@ -18,5 +18,4 @@ namespace GymSystem.BLL.Specifications.WorkoutPlanSpec
             AddOrderBy(w => w.DayOfWeek);
         }
     }
-
 }

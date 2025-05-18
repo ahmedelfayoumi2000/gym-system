@@ -28,8 +28,6 @@ namespace GymSystem.DAL.Configurations
                    .HasForeignKey(c => c.TrainerId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-
-            // Query Filter يستبعد السجلات المحذوفة
             builder.HasQueryFilter(c => !c.IsDeleted);
 
         }

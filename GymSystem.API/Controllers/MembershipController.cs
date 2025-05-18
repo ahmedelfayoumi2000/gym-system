@@ -13,6 +13,8 @@ using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Services;
 using Microsoft.AspNetCore.Identity;
 using GymSystem.DAL.Entities.Identity;
+using GymSystem.API.Helpers;
+using GymSystem.DAL.Entities;
 
 namespace GymSystem.API.Controllers
 {
@@ -39,7 +41,7 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllMemberships([FromQuery] SpecPrams specParams)
+        public async Task<IActionResult> GetAllMemberships()
         {
             try
             {
@@ -56,7 +58,7 @@ namespace GymSystem.API.Controllers
                     return NotFound(new ApiExceptionResponse(404, $"User with ID {userId} not found in the database."));
                 }
 
-                var memberships = await _membershipRepo.GetAllAsync(specParams);
+                var memberships = await _membershipRepo.GetAllAsync();
                 var total = memberships.Count();
                 var activemember = memberships.Count(memberships => memberships.IsActive);
                 var Susbendmember = memberships.Count(memberships => !memberships.IsActive);
@@ -129,10 +131,15 @@ namespace GymSystem.API.Controllers
                 var response = await _membershipRepo.CreateAsync(membershipDto);
                 return HandleApiResponse(response, StatusCodes.Status201Created);
             }
-            catch (Exception ex)
+            catch (ApplicationException ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, "An error occurred while creating the membership", ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An unexpected error occurred", ex.Message));
             }
         }
 
@@ -201,12 +208,16 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetActiveMemberships()
+        public async Task<IActionResult> GetActiveMemberships([FromQuery] SpecPrams specParams)
         {
             try
             {
-                var memberships = await _membershipRepo.GetActiveMembershipsAsync();
-                return Ok(new ApiResponse(200, "Active memberships retrieved successfully", memberships));
+                specParams.IsActive = true;
+                var data = await _membershipRepo.GetActiveMembershipsAsync(specParams);
+                var totalCount = data.Count();
+
+
+                return Ok(new ApiResponse(200, "Active memberships retrieved successfully", new Pagination<MonthlyMembershipViewDto>(specParams.PageIndex, specParams.PageSize, totalCount, data)));
             }
             catch (Exception ex)
             {
@@ -224,12 +235,16 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSuspendedMemberships()
+        public async Task<IActionResult> GetSuspendedMemberships([FromQuery] SpecPrams specParams)
         {
             try
             {
-                var memberships = await _membershipRepo.GetSuspendedMembershipsAsync();
-                return Ok(new ApiResponse(200, "Suspended memberships retrieved successfully", memberships));
+                specParams.IsActive = false;
+                var data = await _membershipRepo.GetSuspendedMembershipsAsync(specParams);
+                var totalCount = data.Count();
+
+
+                return Ok(new ApiResponse(200, "Suspended memberships retrieved successfully", new Pagination<MonthlyMembershipViewDto>(specParams.PageIndex, specParams.PageSize, totalCount, data)));
             }
             catch (Exception ex)
             {
@@ -343,7 +358,7 @@ namespace GymSystem.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto profileDto)
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto profileDto)
         {
             if (!ModelState.IsValid)
             {

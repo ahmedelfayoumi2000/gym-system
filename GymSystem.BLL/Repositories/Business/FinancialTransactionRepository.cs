@@ -72,7 +72,6 @@ namespace GymSystem.BLL.Repositories.Business
 
                 var transactionDtos = _mapper.Map<List<TransactionDto>>(transactions);
 
-                // Calculate totals
                 var totalIncome = transactionDtos
                     .Where(t => t.Amount > 0)
                     .Sum(t => t.Amount);

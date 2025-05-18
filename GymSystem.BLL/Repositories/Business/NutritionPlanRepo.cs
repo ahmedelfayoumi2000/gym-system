@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
+using GymSystem.DAL.Entities.AI;
 
 namespace GymSystem.BLL.Repositories.Business
 {
@@ -20,7 +21,7 @@ namespace GymSystem.BLL.Repositories.Business
         private readonly IMapper _mapper;
         private readonly IGenerativeAIService _aiService;
         private readonly UserManager<AppUser> _userManager;
-        public NutritionPlanRepo(IUnitOfWork unitOfWork, IMapper mapper, IGenerativeAIService aiService , UserManager<AppUser> userManager)
+        public NutritionPlanRepo(IUnitOfWork unitOfWork, IMapper mapper, IGenerativeAIService aiService, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -28,62 +29,37 @@ namespace GymSystem.BLL.Repositories.Business
             _userManager = userManager;
         }
 
-        public async Task<ApiResponse> GenerateNutritionPlanForUserAsync(int userId)
+        public async Task<ApiResponse> GenerateNutritionPlanForUserAsync(string userId, AINutritionPlan aiNutritionPlan)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return new ApiResponse(404, $"User with ID {userId} not found.");
                 }
 
-                var aiInput = new AIInputData
+                var nutritionPlan = new NutritionPlanAi
                 {
                     UserId = userId,
-                    Weight = user.Weight,
-                    Height = user.Height,
-                    Age = user.Age,
-                    Gender = user.Gender,
-                    FitnessLevel = user.FitnessLevel,
-                    Goal = user.Goal,
-                    //CaloriesTarget = user.CaloriesTarget,
-                    //MealsPerDay = user.MealsPerDay,
-                    //TrainingDaysPerWeek = user.TrainingDaysPerWeek
+                    Calories = aiNutritionPlan.Calories,
+                    IsDeleted = false,
+                    Meals = new List<MealAi>()
                 };
 
-                AIGeneratedPlan aiPlan;
-                try
+                foreach (var aiMeal in aiNutritionPlan.Meals)
                 {
-                    aiPlan = await _aiService.GeneratePlanAsync(aiInput);
-                }
-                catch (Exception ex)
-                {
-                    return new ApiResponse(503, $"Failed to generate nutrition plan using AI: {ex.Message}. Please add nutrition plan manually as a trainer.");
-                }
-
-                var nutritionPlan = new NutritionPlan
-                {
-                    //ينضافو فس الكلاس
-                    //UserId = userId,
-                    //Calories = aiPlan.NutritionPlan.Calories,
-                    IsDeleted = false
-                };
-
-                foreach (var aiMeal in aiPlan.NutritionPlan.Meals)
-                {
-                    var meal = new Meal
+                    var meal = new MealAi
                     {
-                        //لو هينضافو برضو
-                        //Name = aiMeal.Name,
-                        //Items = string.Join(", ", aiMeal.Items),
-                        //Calories = aiMeal.Calories,
+                        Name = aiMeal.Name,
+                        Items = string.Join(", ", aiMeal.Items),
+                        Calories = aiMeal.Calories,
                         NutritionPlan = nutritionPlan
                     };
-                    _unitOfWork.Repository<Meal>().Add(meal);
+                    nutritionPlan.Meals.Add(meal);
                 }
 
-                _unitOfWork.Repository<NutritionPlan>().Add(nutritionPlan);
+                _unitOfWork.Repository<NutritionPlanAi>().Add(nutritionPlan);
 
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
@@ -98,7 +74,6 @@ namespace GymSystem.BLL.Repositories.Business
                 return new ApiResponse(500, $"Error generating nutrition plan: {ex.Message}");
             }
         }
-    
 
         public async Task<ApiResponse> CreateNutritionPlan(NutritionPlanDto nutritionPlanDto)
         {

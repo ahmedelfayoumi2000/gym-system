@@ -16,7 +16,7 @@ namespace GymSystem.DAL.Entities
         public int TotalCalories { get; set; }  // إجمالي السعرات المستهدفة
         public int Steps { get; set; }          // عدد الخطوات
         public int TotalSteps { get; set; }     // الهدف من الخطوات
-        public int WaterIntake { get; set; }    //كمية المياه
+        public int WaterIntake { get; set; }    // كمية المياه (مل)
         public int TotalWater { get; set; }     // الهدف من المياه
         public float Weight { get; set; }       // الوزن في اليوم ده
     }

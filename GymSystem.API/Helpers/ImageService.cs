@@ -1,6 +1,7 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using GymSystem.BLL.Interfaces;
+using System.Net.Http;
 
 namespace GymSystem.API.Helpers
 {
@@ -8,10 +9,12 @@ namespace GymSystem.API.Helpers
     {
         private readonly Cloudinary _cloudinary;
         private readonly string[] _allowedExtensions = new string[] { ".jpg", ".png", ".jpeg" };
+        private readonly HttpClient _httpClient;
 
         public ImageService(Cloudinary cloudinary)
         {
             _cloudinary = cloudinary ?? throw new ArgumentNullException(nameof(cloudinary));
+            _httpClient = new HttpClient();
         }
 
         public async Task<Tuple<int, string>> UploadImageAsync(IFormFile imageFile)
@@ -69,6 +72,34 @@ namespace GymSystem.API.Helpers
                 Console.WriteLine($"Exception in DeleteImageAsync: {ex.Message}");
             }
         }
+        public async Task<byte[]> GetImageAsync(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                return null;
+            }
+
+            try
+            {
+                // Download the image from the Cloudinary URL
+                using var response = await _httpClient.GetAsync(imageUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsByteArrayAsync();
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to download image from Cloudinary. Status Code: {response.StatusCode}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetImageAsync: {ex.Message}");
+                return null;
+            }
+        }
+
 
         private string GetPublicIdFromUrl(string url)
         {

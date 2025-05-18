@@ -35,7 +35,6 @@ namespace GymSystem.BLL.Repositories
         {
             try
             {
-                _logger.LogInformation("Retrieving all equipment with parameters: {@SpecParams}", specParams);
 
                 ISpecification<Equipment> spec = specParams != null
                     ? new EquipmentWithFiltersSpecification(specParams)
@@ -44,13 +43,11 @@ namespace GymSystem.BLL.Repositories
                 var equipments = await _unitOfWork.Repository<Equipment>().GetAllWithSpecAsync(spec);
 
                 var equipmentDtos = _mapper.Map<IReadOnlyList<EquipmentViewDto>>(equipments);
-                _logger.LogInformation("Successfully retrieved {Count} equipment items", equipmentDtos.Count);
 
                 return equipmentDtos;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving equipment list");
                 throw new Exception("Failed to retrieve equipment from the database.", ex);
             }
         }
@@ -59,26 +56,21 @@ namespace GymSystem.BLL.Repositories
         {
             try
             {
-                _logger.LogInformation("Retrieving equipment with ID: {EquipmentId}", id);
-
                 var spec = new EquipmentWithRelationsSpecification(e => e.Id == id);
                 var equipment = await _unitOfWork.Repository<Equipment>()
                     .GetByIdWithSpecAsync(spec);
 
                 if (equipment == null)
                 {
-                    _logger.LogWarning("Equipment with ID {EquipmentId} not found.", id);
                     return null;
                 }
 
                 var equipmentDto = _mapper.Map<EquipmentViewDto>(equipment);
-                _logger.LogInformation("Successfully retrieved equipment with ID: {EquipmentId}", id);
 
                 return equipmentDto;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving equipment with ID: {EquipmentId}", id);
                 throw new Exception($"Failed to retrieve equipment with ID {id} from the database.", ex);
             }
         }
@@ -88,13 +80,11 @@ namespace GymSystem.BLL.Repositories
         {
             if (equipmentCreateDto == null)
             {
-                _logger.LogWarning("Received null equipment data for creation.");
                 return new ApiResponse(400, "Equipment data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Creating new equipment with name: {EquipmentName}", equipmentCreateDto.EquipmentName);
 
                 var equipment = _mapper.Map<Equipment>(equipmentCreateDto);
                 await _unitOfWork.Repository<Equipment>().Add(equipment);
@@ -102,18 +92,15 @@ namespace GymSystem.BLL.Repositories
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to save equipment with name: {EquipmentName}", equipmentCreateDto.EquipmentName);
                     return new ApiResponse(500, "Failed to save the equipment to the database.");
                 }
 
                 var createdDto = _mapper.Map<EquipmentViewDto>(equipment);
-                _logger.LogInformation("Equipment created successfully with ID: {EquipmentId}", createdDto.Id);
 
                 return new ApiResponse(201, "Equipment created successfully", createdDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating equipment with name: {EquipmentName}", equipmentCreateDto.EquipmentName);
                 return new ApiExceptionResponse(500, "An error occurred while creating the equipment", ex.Message);
             }
         }
@@ -122,27 +109,22 @@ namespace GymSystem.BLL.Repositories
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Invalid equipment ID: {EquipmentId}", id);
                 return new ApiResponse(400, "Equipment ID must be a positive integer.");
             }
 
             if (equipmentCreateDto == null)
             {
-                _logger.LogWarning("Received null equipment data for update with ID: {EquipmentId}", id);
                 return new ApiResponse(400, "Equipment data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Updating equipment with ID: {EquipmentId}", id);
-
                 var spec = new EquipmentWithRelationsSpecification(e => e.Id == id);
                 var existingEquipment = await _unitOfWork.Repository<Equipment>()
                     .GetByIdWithSpecAsync(spec);
 
                 if (existingEquipment == null)
                 {
-                    _logger.LogWarning("Equipment with ID {EquipmentId} not found for update.", id);
                     return new ApiResponse(404, $"Equipment with ID {id} not found.");
                 }
 
@@ -152,18 +134,15 @@ namespace GymSystem.BLL.Repositories
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to update equipment with ID: {EquipmentId}", id);
                     return new ApiResponse(500, "Failed to update the equipment in the database.");
                 }
 
                 var updatedDto = _mapper.Map<EquipmentViewDto>(existingEquipment);
-                _logger.LogInformation("Equipment updated successfully with ID: {EquipmentId}", id);
 
                 return new ApiResponse(200, "Equipment updated successfully", updatedDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating equipment with ID: {EquipmentId}", id);
                 return new ApiExceptionResponse(500, "An error occurred while updating the equipment", ex.Message);
             }
         }
@@ -173,40 +152,33 @@ namespace GymSystem.BLL.Repositories
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Invalid equipment ID: {EquipmentId}", id);
                 return new ApiResponse(400, "Equipment ID must be a positive integer.");
             }
 
             try
             {
-                _logger.LogInformation("Deleting equipment with ID: {EquipmentId}", id);
-
                 var spec = new EquipmentWithRelationsSpecification(e => e.Id == id);
                 var equipment = await _unitOfWork.Repository<Equipment>()
                     .GetByIdWithSpecAsync(spec);
 
                 if (equipment == null)
                 {
-                    _logger.LogWarning("Equipment with ID {EquipmentId} not found for deletion.", id);
                     return new ApiResponse(404, $"Equipment with ID {id} not found.");
                 }
 
-                equipment.IsDeleted = true; // Soft delete
+                equipment.IsDeleted = true;
                 _unitOfWork.Repository<Equipment>().Update(equipment);
 
                 var result = await _unitOfWork.Complete();
                 if (result <= 0)
                 {
-                    _logger.LogError("Failed to delete equipment with ID: {EquipmentId}", id);
                     return new ApiResponse(500, "Failed to delete the equipment from the database.");
                 }
 
-                _logger.LogInformation("Equipment deleted successfully with ID: {EquipmentId}", id);
                 return new ApiResponse(200, "Equipment deleted successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting equipment with ID: {EquipmentId}", id);
                 return new ApiExceptionResponse(500, "An error occurred while deleting the equipment", ex.Message);
             }
         }

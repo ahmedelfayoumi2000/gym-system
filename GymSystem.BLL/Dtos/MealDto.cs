@@ -11,9 +11,6 @@ namespace GymSystem.BLL.Dtos
     public class MealDto
     {
         public int MealId { get; set; }
-        //public string? ImageUrl { get; set; }
-        //[NotMapped]
-        //public IFormFile? Image { get; set; }
         public string MealName { get; set; }
         public string Description { get; set; }
         public int? NutritionPlanId { get; set; }

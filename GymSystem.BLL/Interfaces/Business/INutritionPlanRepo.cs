@@ -10,10 +10,10 @@ namespace GymSystem.BLL.Interfaces.Business
 {
     public interface INutritionPlanRepo
     {
+        Task<ApiResponse> GenerateNutritionPlanForUserAsync(string userId, AINutritionPlan aiNutritionPlan);
         Task<ApiResponse> CreateNutritionPlan(NutritionPlanDto nutritionPlanDto);
         Task<ApiResponse> UpdateNutritionPlan(int nutritionPlanId, NutritionPlanDto nutritionPlanDto);
         Task<ApiResponse> DeleteNutritionPlan(int nutritionPlanId);
-        Task<ApiResponse> GenerateNutritionPlanForUserAsync(int userId);
         Task<NutritionPlanDto> GetNutritionPlan(int nutritionPlanId);
         Task<IEnumerable<NutritionPlanDto>> GetNutritionPlans();
     }

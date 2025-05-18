@@ -20,5 +20,7 @@ namespace GymSystem.BLL.Dtos.User
         public string FitnessLevel { get; set; }
         public bool IsProfileConfirmed { get; set; }
         public List<string> Roles { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }

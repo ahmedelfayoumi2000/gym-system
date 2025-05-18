@@ -108,6 +108,7 @@ namespace GymSystem.API.Controllers
                 var result = await _userManager.CreateAsync(user, employeeDto.PassWord);
                 if (!result.Succeeded)
                 {
+
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                     return BadRequest(new ApiResponse(400, $"Failed to create employee: {errors}"));
                 }
@@ -120,6 +121,8 @@ namespace GymSystem.API.Controllers
             }
             catch (Exception ex)
             {
+                var user = await _userManager.FindByEmailAsync(employeeDto.Email);
+                await _userManager.DeleteAsync(user);
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, "An error occurred while creating the employee", ex.Message));
             }

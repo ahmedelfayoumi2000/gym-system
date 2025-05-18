@@ -10,6 +10,6 @@ namespace GymSystem.DAL.Entities.Identity
     {
         public string OldPassword { get; set; }
         public string NewPassword { get; set; }
-      
+
     }
 }

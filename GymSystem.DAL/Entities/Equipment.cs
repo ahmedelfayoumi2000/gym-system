@@ -11,5 +11,8 @@ namespace GymSystem.DAL.Entities
         public DateTime LastMaintenanceDate { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsAvailable { get; set; }
+
+
     }
+
 }

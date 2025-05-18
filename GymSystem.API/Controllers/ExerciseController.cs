@@ -1,6 +1,7 @@
 ﻿using GymSystem.BLL.Dtos;
 using GymSystem.BLL.Errors;
 using GymSystem.BLL.Interfaces.Business;
+using GymSystem.BLL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,6 @@ using System.Threading.Tasks;
 
 namespace GymSystem.API.Controllers
 {
-    /// <summary>
-    ///  التمارين اليومية
-    /// </summary>
     [Authorize]
     public class ExercisesController : BaseApiController
     {
@@ -46,12 +44,12 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Trainer")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddExercise([FromBody] ExerciseDto exerciseDto)
+        public async Task<IActionResult> AddExercise([FromForm] ExerciseDto exerciseDto)
         {
             if (exerciseDto == null)
             {
@@ -70,13 +68,14 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Trainer")]
+
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateExercise(int id, [FromBody] ExerciseDto exerciseDto)
+        public async Task<IActionResult> UpdateExercise(int id, [FromForm] ExerciseDto exerciseDto)
         {
             if (!IsValidId(id) || exerciseDto == null)
             {
@@ -95,6 +94,25 @@ namespace GymSystem.API.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Trainer")]
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteExercise(int id)
+        {
+            try
+            {
+                var response = await _exerciseRepo.DeleteExercise(id);
+                return StatusCode((int)response.StatusCode, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiExceptionResponse(500, "An unexpected error occurred while deleting the exercise .", ex.Message));
+            }
+        }
+
 
         [HttpGet("daily")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -109,8 +127,29 @@ namespace GymSystem.API.Controllers
             }
             catch (Exception ex)
             {
+
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, "An error occurred while retrieving daily exercises", ex.Message));
+
+            }
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetExercises()
+        {
+            try
+            {
+                var exercises = await _exerciseRepo.GetAllExercisesAsync();
+                return Ok(new ApiResponse(200, "Exercises retrieved successfully", exercises));
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while retrieving Exercises", ex.Message));
+
             }
         }
 

@@ -20,7 +20,6 @@ using GymSystem.BLL.Dtos.User;
 namespace GymMangamentSystem.Apis.Controllers
 {
 
-    [Authorize(Roles = "Admin")]
     public class UserController : BaseApiController
 
     {
@@ -47,16 +46,13 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching all trainers.");
                 var trainers = await _userManager.GetUsersInRoleAsync("Trainer");
                 var trainerDtos = await MapUsersToDtos(trainers);
 
-                _logger.LogInformation("Successfully retrieved {TrainerCount} trainers.", trainerDtos.Count);
                 return Ok(new ApiResponse(200, "Trainers retrieved successfully", trainerDtos));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving trainers.");
                 return HandleException(ex);
             }
         }
@@ -69,11 +65,9 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching all members.");
                 var members = await _userManager.GetUsersInRoleAsync("Member");
                 var memberDtos = await MapUsersToDtos(members);
 
-                _logger.LogInformation("Successfully retrieved {MemberCount} members.", memberDtos.Count);
                 return Ok(new ApiResponse(200, "Members retrieved successfully", memberDtos));
             }
             catch (Exception ex)
@@ -91,11 +85,9 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching all receptionists.");
                 var receptionists = await _userManager.GetUsersInRoleAsync("Receptionist");
                 var receptionistDtos = await MapUsersToDtos(receptionists);
 
-                _logger.LogInformation("Successfully retrieved {ReceptionistCount} receptionists.", receptionistDtos.Count);
                 return Ok(new ApiResponse(200, "Receptionists retrieved successfully", receptionistDtos));
             }
             catch (Exception ex)
@@ -115,7 +107,6 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                _logger.LogWarning("GetUser called with null or empty ID.");
                 return BadRequest(new ApiValidationErrorResponse
                 {
                     Errors = new List<string> { "User ID is required and must not be empty." },
@@ -126,7 +117,6 @@ namespace GymMangamentSystem.Apis.Controllers
 
             try
             {
-                _logger.LogInformation("Fetching user with ID: {UserId}", id);
 
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
@@ -152,12 +142,10 @@ namespace GymMangamentSystem.Apis.Controllers
                     UserCode = user.UserCode
                 };
 
-                _logger.LogInformation("User retrieved successfully with ID: {UserId}", id);
                 return Ok(new ApiResponse(200, "User retrieved successfully", userDto));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
                 return HandleException(ex);
             }
         }
@@ -172,7 +160,6 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             if (!ModelState.IsValid || model == null)
             {
-                _logger.LogWarning("Invalid model state for UpdateUserRoles with UserId: {UserId}", id);
                 return BadRequest(CreateValidationErrorResponse("Invalid user role data"));
             }
 
@@ -184,19 +171,16 @@ namespace GymMangamentSystem.Apis.Controllers
 
             try
             {
-                _logger.LogInformation("Starting role update for user with ID: {UserId}", id);
 
                 var user = await _userManager.FindByIdAsync(model.UserId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", id);
                     return NotFound(new ApiResponse(404, $"User with ID {id} not found"));
                 }
 
                 var currentRoles = await _userManager.GetRolesAsync(user);
                 var requestedRoles = model.Roles?.Where(r => r.IsSelected).Select(r => r.Name).ToList() ?? new List<string>();
 
-                // Verify requested roles exist
                 foreach (var role in requestedRoles)
                 {
                     if (!await _roleManager.RoleExistsAsync(role))
@@ -214,12 +198,9 @@ namespace GymMangamentSystem.Apis.Controllers
                     if (!addResult.Succeeded)
                     {
                         var errors = string.Join(", ", addResult.Errors.Select(e => e.Description));
-                        _logger.LogError("Failed to add roles to user ID {UserId}: {Errors}", id, errors);
                         return BadRequest(new ApiResponse(400, $"Failed to add roles: {errors}"));
                     }
-                    _logger.LogInformation("Added roles {Roles} to user ID: {UserId}", string.Join(", ", rolesToAdd), id);
                 }
-
 
                 if (rolesToRemove.Any())
                 {
@@ -227,25 +208,75 @@ namespace GymMangamentSystem.Apis.Controllers
                     if (!removeResult.Succeeded)
                     {
                         var errors = string.Join(", ", removeResult.Errors.Select(e => e.Description));
-                        _logger.LogError("Failed to remove roles from user ID {UserId}: {Errors}", id, errors);
                         return BadRequest(new ApiResponse(400, $"Failed to remove roles: {errors}"));
                     }
-                    _logger.LogInformation("Removed roles {Roles} from user ID: {UserId}", string.Join(", ", rolesToRemove), id);
                 }
 
-                // ✅ إحضار الأدوار المحدّثة وإرجاعها
                 var updatedRoles = await _userManager.GetRolesAsync(user);
 
-                _logger.LogInformation("User roles updated successfully for ID: {UserId}", id);
                 return Ok(new ApiResponse(200, "User roles updated successfully", updatedRoles));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating roles for user with ID: {UserId}", id);
                 return HandleException(ex);
             }
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("users/roles/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiResponse>> AddUserRole(string id, [FromBody] AddUserRoleDTO model)
+        {
+            if (!ModelState.IsValid || model == null || string.IsNullOrEmpty(model.Role))
+            {
+                return BadRequest(CreateValidationErrorResponse("Invalid role data. Role cannot be empty."));
+            }
+
+            if (id != model.UserId)
+            {
+                return BadRequest(new ApiResponse(400, "User ID in route and model must match"));
+            }
+
+            try
+            {
+
+                var user = await _userManager.FindByIdAsync(model.UserId);
+                if (user == null)
+                {
+                    return NotFound(new ApiResponse(404, $"User with ID {id} not found"));
+                }
+
+                if (!await _roleManager.RoleExistsAsync(model.Role))
+                {
+                    return BadRequest(new ApiResponse(400, $"Role '{model.Role}' does not exist in the system."));
+                }
+
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Contains(model.Role))
+                {
+                    return BadRequest(new ApiResponse(400, $"User already has the role '{model.Role}'."));
+                }
+
+                var addResult = await _userManager.AddToRoleAsync(user, model.Role);
+                if (!addResult.Succeeded)
+                {
+                    var errors = string.Join(", ", addResult.Errors.Select(e => e.Description));
+                    return BadRequest(new ApiResponse(400, $"Failed to add role: {errors}"));
+                }
+
+
+                var updatedRoles = await _userManager.GetRolesAsync(user);
+
+                return Ok(new ApiResponse(200, $"Role '{model.Role}' added successfully to user.", updatedRoles));
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost("users")]
@@ -257,18 +288,15 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             if (!ModelState.IsValid || model == null)
             {
-                _logger.LogWarning("Invalid model state for AddUser with Email: {Email}", model?.Email);
                 return BadRequest(CreateValidationErrorResponse("Invalid user registration data"));
             }
 
             try
             {
-                _logger.LogInformation("Attempting to add new user with Email: {Email}", model.Email);
 
                 var existingUser = await _userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                 {
-                    _logger.LogWarning("User with Email {Email} already exists.", model.Email);
                     return Conflict(new ApiResponse(409, $"User with email '{model.Email}' already exists"));
                 }
 
@@ -286,7 +314,6 @@ namespace GymMangamentSystem.Apis.Controllers
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    _logger.LogError("Failed to create user with Email {Email}: {Errors}", model.Email, errors);
                     return BadRequest(new ApiResponse(400, $"Failed to create user: {errors}"));
                 }
 
@@ -294,9 +321,8 @@ namespace GymMangamentSystem.Apis.Controllers
                 var roleResult = await _userManager.AddToRoleAsync(user, roleName);
                 if (!roleResult.Succeeded)
                 {
-                    await _userManager.DeleteAsync(user); // Rollback user creation
+                    await _userManager.DeleteAsync(user); 
                     var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    _logger.LogError("Failed to assign role {RoleName} to user {Email}: {Errors}", roleName, model.Email, errors);
                     return BadRequest(new ApiResponse(400, $"Failed to assign role: {errors}"));
                 }
 
@@ -313,13 +339,10 @@ namespace GymMangamentSystem.Apis.Controllers
                     Roles = new List<string> { roleName }
                 };
 
-
-                _logger.LogInformation("User added successfully with ID: {UserId}", user.Id);
                 return StatusCode(StatusCodes.Status201Created, new ApiResponse(201, "User created successfully", userDto));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding user with Email: {Email}", model.Email);
                 return HandleException(ex);
             }
         }
@@ -334,24 +357,19 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             if (!ModelState.IsValid || userDto == null)
             {
-                _logger.LogWarning("Invalid model state for UpdateUser with ID: {UserId}", id);
                 return BadRequest(CreateValidationErrorResponse("Invalid user update data"));
             }
 
             if (id != userDto.Id)
             {
-                _logger.LogWarning("Mismatch between route ID {RouteId} and model ID {ModelId}", id, userDto.Id);
                 return BadRequest(new ApiResponse(400, "User ID in route and model must match"));
             }
 
             try
             {
-                _logger.LogInformation("Attempting to update user details for ID: {UserId}", id);
-
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", id);
                     return NotFound(new ApiResponse(404, $"User with ID {id} not found"));
                 }
 
@@ -366,17 +384,14 @@ namespace GymMangamentSystem.Apis.Controllers
                 if (!updateResult.Succeeded)
                 {
                     var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-                    _logger.LogError("Failed to update user details for ID {UserId}: {Errors}", id, errors);
                     return BadRequest(new ApiResponse(400, $"Failed to update user: {errors}"));
                 }
 
                 var updatedUserDto = await MapUserToDto(user);
-                _logger.LogInformation("User details updated successfully for ID: {UserId}", id);
                 return Ok(new ApiResponse(200, "User updated successfully", updatedUserDto));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user details for ID: {UserId}", id);
                 return HandleException(ex);
             }
         }
@@ -391,7 +406,6 @@ namespace GymMangamentSystem.Apis.Controllers
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                _logger.LogWarning("DeleteUser called with null or empty ID.");
                 return BadRequest(new ApiValidationErrorResponse
                 {
                     Errors = new List<string> { "User ID is required and must not be empty." },
@@ -402,12 +416,9 @@ namespace GymMangamentSystem.Apis.Controllers
 
             try
             {
-                _logger.LogInformation("Attempting to delete user with ID: {UserId}", id);
-
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found.", id);
                     return NotFound(new ApiResponse(404, $"User with ID {id} not found"));
                 }
 
@@ -415,16 +426,13 @@ namespace GymMangamentSystem.Apis.Controllers
                 if (!deleteResult.Succeeded)
                 {
                     var errors = string.Join(", ", deleteResult.Errors.Select(e => e.Description));
-                    _logger.LogError("Failed to delete user with ID {UserId}: {Errors}", id, errors);
                     return BadRequest(new ApiResponse(400, $"Failed to delete user: {errors}"));
                 }
 
-                _logger.LogInformation("User deleted successfully with ID: {UserId}", id);
                 return Ok(new ApiResponse(200, "User deleted successfully"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting user with ID: {UserId}", id);
                 return HandleException(ex);
             }
         }

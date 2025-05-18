@@ -1,4 +1,5 @@
 ﻿using GymSystem.DAL.Entities;
+using GymSystem.DAL.Entities.AI;
 using GymSystem.DAL.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -14,19 +15,9 @@ namespace GymSystem.DAL.Identity
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            SeedRoles(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
-        private static void SeedRoles(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<IdentityRole>().HasData
-            (
-                new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" },
-                new IdentityRole { Id = "2", Name = "Trainer", NormalizedName = "TRAINER" },
-                new IdentityRole { Id = "3", Name = "Member", NormalizedName = "MEMBER" },
-                new IdentityRole { Id = "5", Name = "Receptionist", NormalizedName = "RECEPTIONIST" }
-            );
-        }
+
 
         public DbSet<Attendance> Attendance { get; set; }
         public DbSet<Class> Classes { get; set; }
@@ -53,5 +44,8 @@ namespace GymSystem.DAL.Identity
         public DbSet<GymSchedule> gymSchedules { get; set; }
         public DbSet<GymScheduleDays> GymScheduleDays { get; set; }
         public DbSet<UserDailyStats> UserDailyStats { get; set; }
+        public DbSet<NutritionPlanAi> NutritionPlanAi { get; set; }
+        public DbSet<ExerciseAi> ExerciseAi { get; set; }
+        public DbSet<MealAi> MealAi { get; set; }
     }
 }

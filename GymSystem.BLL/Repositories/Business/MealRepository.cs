@@ -33,13 +33,11 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (meal == null)
             {
-                _logger.LogWarning("Attempted to create a null MealDto.");
                 return new ApiResponse(400, "Meal data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Attempting to create meal with name: {MealName}", meal.MealName);
 
                 var spec = new MealByNameSpecification(meal.MealName);
                 var existingMeal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
@@ -53,12 +51,10 @@ namespace GymSystem.BLL.Repositories.Business
                 await _unitOfWork.Repository<Meal>().Add(mealEntity);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meal {MealName} created successfully with ID: {Id}", meal.MealName, mealEntity.Id);
                 return new ApiResponse(201, "Meal added successfully", _mapper.Map<MealDto>(mealEntity));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating meal with name: {MealName}", meal.MealName);
                 return new ApiResponse(500, $"Failed to add meal: {ex.Message}");
             }
         }
@@ -67,13 +63,11 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Attempting to delete meal with ID: {Id}", id);
 
                 var spec = new MealByIdSpecification(id);
                 var meal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (meal == null)
                 {
-                    _logger.LogWarning("Meal with ID {Id} not found or already deleted.", id);
                     return new ApiResponse(404, $"Meal with ID {id} not found.");
                 }
 
@@ -81,12 +75,10 @@ namespace GymSystem.BLL.Repositories.Business
                 _unitOfWork.Repository<Meal>().Update(meal);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meal with ID {Id} deleted successfully.", id);
                 return new ApiResponse(200, "Meal deleted successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting meal with ID: {Id}", id);
                 return new ApiResponse(500, $"Failed to delete meal: {ex.Message}");
             }
         }
@@ -95,18 +87,15 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Retrieving all active meals.");
 
                 var spec = new AllMealsSpecification();
                 var meals = await _unitOfWork.Repository<Meal>().GetAllWithSpecAsync(spec);
                 var mealDtos = _mapper.Map<IEnumerable<MealDto>>(meals);
 
-                _logger.LogInformation("Retrieved {Count} active meals.", mealDtos.Count());
                 return mealDtos;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving all meals.");
                 throw new ApplicationException($"Failed to retrieve meals: {ex.Message}", ex);
             }
         }
@@ -115,23 +104,18 @@ namespace GymSystem.BLL.Repositories.Business
         {
             try
             {
-                _logger.LogInformation("Retrieving meal with ID: {Id}", id);
-
                 var spec = new MealByIdSpecification(id);
                 var meal = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (meal == null)
                 {
-                    _logger.LogWarning("Meal with ID {Id} not found.", id);
                     return null;
                 }
 
                 var mealDto = _mapper.Map<MealDto>(meal);
-                _logger.LogInformation("Meal with ID {Id} retrieved successfully.", id);
                 return mealDto;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving meal with ID: {Id}", id);
                 throw new ApplicationException($"Failed to retrieve meal: {ex.Message}", ex);
             }
         }
@@ -140,32 +124,27 @@ namespace GymSystem.BLL.Repositories.Business
         {
             if (meal == null)
             {
-                _logger.LogWarning("Attempted to update meal with ID {Id} using null MealDto.", id);
                 return new ApiResponse(400, "Meal data cannot be null.");
             }
 
             try
             {
-                _logger.LogInformation("Attempting to update meal with ID: {Id}", id);
 
                 var spec = new MealByIdSpecification(id);
                 var mealToUpdate = await _unitOfWork.Repository<Meal>().GetEntityWithSpecAsync(spec);
                 if (mealToUpdate == null)
                 {
-                    _logger.LogWarning("Meal with ID {Id} not found or already deleted.", id);
                     return new ApiResponse(404, $"Meal with ID {id} not found.");
                 }
 
-                _mapper.Map(meal, mealToUpdate);
+                _mapper.Map(meal, mealToUpdate); 
                 _unitOfWork.Repository<Meal>().Update(mealToUpdate);
                 await _unitOfWork.Complete();
 
-                _logger.LogInformation("Meal with ID {Id} updated successfully.", id);
                 return new ApiResponse(200, "Meal updated successfully", _mapper.Map<MealDto>(mealToUpdate));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating meal with ID: {Id}", id);
                 return new ApiResponse(500, $"Failed to update meal: {ex.Message}");
             }
         }

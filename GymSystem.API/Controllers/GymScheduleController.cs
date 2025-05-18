@@ -17,7 +17,7 @@ namespace GymSystem.API.Controllers
             _scheduleRepo = scheduleRepo ?? throw new ArgumentNullException(nameof(scheduleRepo));
         }
 
-        [Authorize(Roles = "Admin,Receptionist,Trainer")]
+        [Authorize]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -35,7 +35,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Receptionist,Trainer")]
+        [Authorize]
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -55,7 +55,7 @@ namespace GymSystem.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Receptionist,Trainer")]
+        [Authorize]
         [HttpGet("by-day/{dayOfWeek}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -143,6 +143,23 @@ namespace GymSystem.API.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiExceptionResponse(500, $"An error occurred while deleting schedule with ID {id}", ex.Message));
+            }
+        }
+        [Authorize]
+        [HttpGet("current")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCurrentActiveSchedule()
+        {
+            try
+            {
+                var response = await _scheduleRepo.GetCurrentActiveSchedule();
+                return HandleApiResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiExceptionResponse(500, "An error occurred while retrieving the current active schedule", ex.Message));
             }
         }
 

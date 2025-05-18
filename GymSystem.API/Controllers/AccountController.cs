@@ -54,13 +54,10 @@ namespace GymSystem.API.Controllers
         {
             try
             {
-                _logger.LogInformation("Processing logout request.");
 
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrWhiteSpace(userId))
                 {
-                    _logger.LogWarning("Logout attempt with no UserId claim in token. Claims available: {Claims}",
-                        string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
                     return BadRequest(new ApiValidationErrorResponse
                     {
                         Errors = new List<string> { "UserId claim not found in the token." },
@@ -69,17 +66,14 @@ namespace GymSystem.API.Controllers
                     });
                 }
 
-                _logger.LogInformation("Initiating logout for UserId: {UserId}", userId);
 
                 var response = await _accountService.LogoutAsync(userId);
 
                 if (response.StatusCode == 200)
                 {
-                    _logger.LogInformation("User with ID {UserId} logged out successfully.", userId);
                     return Ok(response);
                 }
 
-                _logger.LogWarning("Logout failed for UserId: {UserId}. Reason: {Message}", userId, response.Message);
                 return response.StatusCode switch
                 {
                     400 => BadRequest(response),
@@ -115,7 +109,6 @@ namespace GymSystem.API.Controllers
         {
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid model state for ForgetPassword with Email: {Email}", request?.Email);
                 return BadRequest(new ApiValidationErrorResponse
                 {
                     Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
@@ -128,7 +121,6 @@ namespace GymSystem.API.Controllers
             return result.StatusCode == 400 ? BadRequest(result) : Ok(result);
         }
 
-        [Authorize]
         [HttpPost("verify-otp")]
         public IActionResult VerifyOtp(VerifyOtp dto)
         {
@@ -145,7 +137,6 @@ namespace GymSystem.API.Controllers
         }
 
 
-        [Authorize]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPassword dto)
         {

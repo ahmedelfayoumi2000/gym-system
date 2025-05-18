@@ -220,6 +220,36 @@ namespace GymSystem.API.Controllers
                     new ApiExceptionResponse(500, "An error occurred while recording the check-in", ex.Message));
             }
         }
-     
+        #region Private Helper Methods
+
+        private ApiValidationErrorResponse CreateValidationError(string message)
+        {
+            return new ApiValidationErrorResponse
+            {
+                Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList(),
+                StatusCode = 400,
+                Message = message
+            };
+        }
+
+        private IActionResult HandleApiResponse(ApiResponse response, int successStatusCode = StatusCodes.Status200OK)
+        {
+            return response.StatusCode switch
+            {
+                200 => Ok(response),
+                201 => StatusCode(StatusCodes.Status201Created, response),
+                400 => BadRequest(response),
+                401 => Unauthorized(response),
+                404 => NotFound(response),
+                409 => Conflict(response),
+                500 => StatusCode(StatusCodes.Status500InternalServerError, response),
+                _ => StatusCode(response.StatusCode ?? 500, response)
+            };
+        }
+
+        #endregion
+
+
+
     }
 }

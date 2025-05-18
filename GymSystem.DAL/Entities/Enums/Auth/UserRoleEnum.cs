@@ -11,6 +11,7 @@ namespace GymSystem.DAL.Entities.Enums.Auth
         Admin,
         Member,
         Trainer,
-        Receptionist
+        Receptionist,
+        User
     }
 }

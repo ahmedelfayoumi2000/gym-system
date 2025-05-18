@@ -29,7 +29,6 @@ namespace GymSystem.BLL.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        // Delete or Releases the allocated resources this Context Or EF booked
         public void Dispose()
         {
             _context.Dispose();

@@ -9,6 +9,7 @@ namespace GymSystem.BLL.Dtos
 {
     public class RepairDto
     {
+        [Required]
         public int EquipmentId { get; set; }
         public string? Description { get; set; }
         public decimal Cost { get; set; }

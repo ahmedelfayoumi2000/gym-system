@@ -18,12 +18,13 @@ namespace GymSystem.DAL.Entities
         public bool IsActive { get; set; }
         public int? HaveDays { get; set; }
         public DateTime? StopDate { get; set; }
-        public DateTime? LastStopDate { get; set; }  // آخر تاريخ تم فيه بدء الإيقاف
+        public DateTime? LastStopDate { get; set; }  
 
         public string? UserCode { get; set; }
-        public string? UserId { get; set; }
+        public string? UserId { get; set; } 
         public AppUser? User { get; set; }
-        public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+        public ICollection<Attendance> Attendances { get; set; } = new HashSet<Attendance>();
+        public ICollection<WorkoutPlan> WorkoutPlans { get; set; } = new HashSet<WorkoutPlan>();
 
     }
 }

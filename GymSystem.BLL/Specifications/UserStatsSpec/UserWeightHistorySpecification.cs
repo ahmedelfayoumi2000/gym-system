@@ -13,7 +13,7 @@ namespace GymSystem.BLL.Specifications.UserStatsSpec
             : base(s => s.UserId == userId &&
                             s.Date >= startDate &&
                             s.Date <= endDate &&
-                            s.Weight > 0)// بنجيب الأيام اللي فيها وزن فقط
+                            s.Weight > 0)
         {
             AddOrderBy(s => s.Date); 
         }

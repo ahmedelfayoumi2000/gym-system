@@ -12,12 +12,11 @@ namespace GymSystem.BLL.Specifications.EquipmentSpec
     {
         public EquipmentWithRelationsSpecification()
         {
-          
+
         }
 
         public EquipmentWithRelationsSpecification(Expression<Func<Equipment, bool>> criteria) : base(criteria)
         {
-            
         }
     }
 }
