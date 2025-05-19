@@ -442,7 +442,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 For inquiries or feedback, reach out to me at:  
 - **Email:** ahmedelfayoumi2003@gmail.com
 - **GitHub:** [ahmedelfayoumi2000](https://github.com/ahmedelfayoumi2000)  
-- **LinkedIn:** [Ahmed Elfayoumi](https://www.linkedin.com/in/ahmed-elfayoumi)
+- **LinkedIn:** [Ahmed Elfayoumi](https://www.linkedin.com/in/ahmed-elfayoumi-el2003/)
 
 ---
 
