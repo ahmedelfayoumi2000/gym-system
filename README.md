@@ -54,7 +54,7 @@ GymSystem/
 │   ├── Controllers/               # API endpoints for users, payments, subscriptions, etc.
 │   ├── Program.cs                 # Entry point and middleware configurations
 │   └── appsettings.json           # Configuration settings (e.g., connection strings, API keys)
-├── GymSystem.BLL/                  # Business Logic Layer (Services)
+├── GymSystem.BLL/                  # Business Logic Layer (Services, DTOs , Specifications, Interfaces)
 │   ├── Services/                  # Business logic for accounts, payments, subscriptions, etc.
 │   └── DTOs/                      # Data Transfer Objects for API communication
 ├── GymSystem.DAL/                  # Data Access Layer (Repositories, DbContext)
